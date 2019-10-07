@@ -185,3 +185,30 @@ Why don't you try this right now?
 Once built, you can execute the assignment from inside the `build/` using 
 
     ./a4-cloth-simulation
+
+## Background 
+
+## Resources
+
+## Finite Elements on Manifolds 
+
+## Triangular Finite Elements 
+
+## Generalized Coordinates and Velocities 
+
+## Kinetic Energy
+
+## Potential Energy
+
+### Principal Stretches
+
+### Linear Elasticity
+
+### Co-Rotational Linear Elasticity 
+
+### Derivatives of Co-Rotational Models 
+
+## Collision Detection with Spheres
+
+## Collision Resolution 
+
