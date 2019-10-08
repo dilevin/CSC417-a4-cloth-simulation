@@ -18,7 +18,6 @@
 
 #include <mass_matrix_mesh.h>
 #include <linearly_implicit_euler.h>
-#include <polar_decomposition.h>
 #include <dsvd.h>
 
 #include <dphi_cloth_triangle_dX.h>
@@ -229,6 +228,11 @@ inline void assignment_setup(int argc, char **argv, Eigen::VectorXd &q, Eigen::V
     //Mass Matrix
     mass_matrix_mesh(M, q,  V, F, density, a0);
 
+    if(M.rows() == 0) {
+        std::cout<<"Mass matrix not implemented, exiting.\n";
+        exit(1);
+    }
+    
     //should be max verts for cloth simulation
     find_max_vertices(fixed_point_indices, V, 0.001);
     
