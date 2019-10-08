@@ -212,3 +212,26 @@ Once built, you can execute the assignment from inside the `build/` using
 
 ## Collision Resolution 
 
+## Assignment Implementation
+
+### Implementation Notes
+
+### dphi_cloth_triangle_dX.cpp
+### T_cloth.cpp
+###  V_cloth_gravity.cpp
+###  dV_cloth_gravity_dq.cpp
+###  V_membrane_corotational.cpp
+###  dV_membrane_corotational_dq.cpp
+###  d2V_membrane_corotational_dq2.cpp
+###  V_spring_particle_particle.cpp
+###  dV_spring_particle_particle_dq.cpp
+###  mass_matrix_mesh.cpp
+###  assemble_forces.cpp
+###  assemble_stiffness.cpp
+###  linearly_implicit_euler.h
+###  fixed_point_constraints.cpp
+###  collision_detection_cloth_sphere.cpp
+###  velocity_filter_cloth_sphere.cpp
+###  pick_nearest_vertices.cpp
+
+
