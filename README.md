@@ -217,8 +217,17 @@ Once built, you can execute the assignment from inside the `build/` using
 ### Implementation Notes
 
 ### dphi_cloth_triangle_dX.cpp
+
+Piecewise constant gradient matrix for linear shape functions. Row $i$ of the returned matrix contains the gradient of the $i^{th}$ shape function.
+
 ### T_cloth.cpp
+
+The kinetic energy of the whole cost mesh.
+
 ###  V_cloth_gravity.cpp
+
+The potential energy due to gravity acting on the cloth mesh. 
+
 ###  dV_cloth_gravity_dq.cpp
 ###  V_membrane_corotational.cpp
 ###  dV_membrane_corotational_dq.cpp
@@ -226,12 +235,35 @@ Once built, you can execute the assignment from inside the `build/` using
 ###  V_spring_particle_particle.cpp
 ###  dV_spring_particle_particle_dq.cpp
 ###  mass_matrix_mesh.cpp
+
+Assemble the full mass matrix for the entire tetrahedral mesh.
+
 ###  assemble_forces.cpp
+
+Assemble the global force vector for the finite element mesh.
+
 ###  assemble_stiffness.cpp
+
+Assemble the global stiffness matrix for the finite element mesh.
+
 ###  linearly_implicit_euler.h
+
+**Use your code from the last assignment**
+
 ###  fixed_point_constraints.cpp
+
+**Use your code from the last assignment**
+
 ###  collision_detection_cloth_sphere.cpp
+
+Detect if any mesh vertex falls inside a sphere centered at (0,0,0.4) with radius 0.22
+
 ###  velocity_filter_cloth_sphere.cpp
+
+Project out components of the per-vertex velocities which are in the **positive** direction of the contact normal
+
 ###  pick_nearest_vertices.cpp
+
+**Use your code from the last assignment**
 
 
