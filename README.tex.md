@@ -1,6 +1,6 @@
 ## Introduction
 
-This assignment will give you the chance to implement a simple cloth simulation. We will leverage our new found expertise on [finite element methods](www.github.com/dilevin/CSC2549-a3-finite-elements-3d) to build a FEM cloth simulation. This simulation will use triangles, rather than tetrahedron as the finite elements and will use a co-rotational model for the cloth material. 
+This assignment will give you the chance to implement a simple cloth simulation. We will leverage our new found expertise on [finite element methods](www.github.com/dilevin/CSC2549-a3-finite-elements-3d) to build a FEM cloth simulation. This simulation will use triangles, rather than tetrahedron as the finite elements and will use a principal stretch-based model for the cloth material. You will also implement your first contact response model, a simple velocity filter that can be bolted onto standard time integration schemes. 
 
 ### Prerequisite installation
 
@@ -229,11 +229,29 @@ The kinetic energy of the whole cost mesh.
 The potential energy due to gravity acting on the cloth mesh. 
 
 ###  dV_cloth_gravity_dq.cpp
+
+Gradient of potential energy due to gravity
+
 ###  V_membrane_corotational.cpp
+
+Potential energy for the cloth stretching force
+
 ###  dV_membrane_corotational_dq.cpp
+
+Gradient of the cloth stretching energy.
+
 ###  d2V_membrane_corotational_dq2.cpp
+
+Hessian matrix of the cloth stretching energy
+
 ###  V_spring_particle_particle.cpp
+
+**Use your code from the last assignment**
+
 ###  dV_spring_particle_particle_dq.cpp
+
+**Use your code from the last assignment**
+
 ###  mass_matrix_mesh.cpp
 
 Assemble the full mass matrix for the entire tetrahedral mesh.
