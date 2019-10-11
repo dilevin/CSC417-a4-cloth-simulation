@@ -218,7 +218,7 @@ Once built, you can execute the assignment from inside the `build/` using
 
 ### dphi_cloth_triangle_dX.cpp
 
-Piecewise constant gradient matrix for linear shape functions. Row $i$ of the returned matrix contains the gradient of the $i^{th}$ shape function.
+Piecewise constant gradient matrix for linear shape functions. Row <img src="/tex/77a3b857d53fb44e33b53e4c8b68351a.svg?invert_in_darkmode&sanitize=true" align=middle width=5.663225699999989pt height=21.68300969999999pt/> of the returned matrix contains the gradient of the <img src="/tex/3def24cf259215eefdd43e76525fb473.svg?invert_in_darkmode&sanitize=true" align=middle width=18.32504519999999pt height=27.91243950000002pt/> shape function.
 
 ### T_cloth.cpp
 
