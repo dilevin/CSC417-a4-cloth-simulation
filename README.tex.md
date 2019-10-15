@@ -324,6 +324,8 @@ This "fixes" the collision. This approach to collision resolution is fast but fo
 
 ### Implementation Notes
 
+In this assignment you will reuse your linearly implicit integrator to time step the dynamic system. Also, we will eschew implementing the strain energy density function, quadrature rule and potential energies separately. Instead functions for potential energy and its derivatives should directly compute the integrated values for a triangular element.
+
 ### dphi_cloth_triangle_dX.cpp
 
 Piecewise constant gradient matrix for linear shape functions. Row $i$ of the returned matrix contains the gradient of the $i^{th}$ shape function.

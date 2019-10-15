@@ -252,33 +252,7 @@ inline void assignment_setup(int argc, char **argv, Eigen::VectorXd &q, Eigen::V
     q = P*q;
     qdot = P*qdot;
     M = P*M*P.transpose();
-
-    //igl additional menu setup
-    // Add content to the default menu window
-    /*Visualize::viewer_menu().callback_draw_custom_window = [&]()
-    {
-        // Define next window position + size
-        ImGui::SetNextWindowPos(ImVec2(180.f * Visualize::viewer_menu().menu_scaling(), 10), ImGuiSetCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(800, 500), ImGuiSetCond_FirstUseEver);
-        ImGui::Begin(
-            "Energy Plot", nullptr,
-            ImGuiWindowFlags_NoSavedSettings
-
-        );
-
-        ImVec2 min = ImGui::GetWindowContentRegionMin();
-        ImVec2 max = ImGui::GetWindowContentRegionMax();
-
-        max.x = ( max.x - min.x ) / 2;
-        max.y -= min.y + ImGui::GetItemsLineHeightWithSpacing() * 3;
-
-        Visualize::plot_energy("T", 1, ImVec2(-15,10), ImVec2(0,2e8), ImGui::GetColorU32(ImGuiCol_PlotLines));
-        Visualize::plot_energy("V", 2, ImVec2(-15,10), ImVec2(0,2e7), ImGui::GetColorU32(ImGuiCol_HeaderActive));
-        Visualize::plot_energy("T+V", 3, ImVec2(-15,10), ImVec2(0,4e8), ImGui::GetColorU32(ImGuiCol_ColumnActive));
-
-        ImGui::End();
-    };*/
-
+    
     Visualize::viewer().callback_key_down = key_down_callback;
 
 }
