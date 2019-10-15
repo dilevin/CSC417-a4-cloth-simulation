@@ -200,9 +200,60 @@ Somewhat sadly, it is difficult to find a comprehensive resource for modern clot
 
 ## Finite Elements on Manifolds 
 
+Our major challenge in this assignment arises from the difference in the dimensionality of the cloth material and the world (deformed) space (**NOTE:** I use the terms world and deformed space interchangeably). Cloth is locally two-dimensional (*2d*) while the world  is [*3d*](https://www.quora.com/What-are-all-of-Calvins-alter-egos).  What will be comforting is that, a relatively straight-forward application of the finite-element-method (FEM) will allow us to build a passable dynamic cloth simulator. 
+
 ## Triangular Finite Elements 
 
+The previous assignment applied FEM to *volumetric* simulation -- the simulation of objects with geometry of dimension equal to that of the world space (i.e our bunny and armadillo were 3d as was the world). In this case our finite elements were also volumetric ... they were tetrahedra in the undeformed space of the simulated object. 
+
+In the case of cloth, the underformed  geometry is of different dimension (2d) than the world space (3d). Because our finite elements divide up the undeformed space, they also need to be 2d. As such we will use [triangles](https://en.wikipedia.org/wiki/Triangle), not tetrahedra as our elements.
+
 ## Generalized Coordinates and Velocities 
+
+Just as in the [previous assignment](https://github.com/dilevin/CSC2549-a3-finite-elements-3d), we need to choose basis, or shape functions with which to approximate functions on our, now triangular, mesh. A triangle as 3 nodes our approximations become
+
+$$ f\left(\mathbf{Y}\right)=\sum_{i=0}^{2}f_i\phi_i\left(\mathbf{Y}\right) $$ 
+
+where $\phi_i$ are the [barycentric coordinates](https://en.wikipedia.org/wiki/Barycentric_coordinate_system) for a 2D triangle and $\mathbf{Y} \in \mathcal{R}^2$ is the 2d coordinate in the undeformed space. 
+
+Our goal is to be able to estimate the 3d world space position of any part of this cloth triangle (for any value of $\mathbf{Y}$ in the triangle). Using our FEM basis, this becomes
+
+$$ \mathbf{x}^t\left(\mathbf{Y}\right)=\sum_{i=0}^{2}\mathbf{x}^t_i\phi_i\left(\mathbf{Y}\right) $$
+
+where $\mathbf{x}^t_i \in \mathcal{R}^3$ are the 3d, per-vertex positions of the cloth mesh at time $t$. This gives a mapping from the 2d space of the undeformed cloth to the 3d world space.  As usual, we choose the **generalized coordinates** ($\mathbf{q} \in \mathcal{R}^9$) to be the stacked vector of vertex positions, which lets us rewrite the above expression as 
+
+$$\mathbf{x}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \\ \dot{\mathbf{x}}^t_3 \end{bmatrix}}_{\mathbf{q}}$$
+ 
+The velocity of the cloth, at any point $\mathbf{Y}$ is then given by the total time derivative: 
+
+$$\mathbf{v}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \\ \dot{\mathbf{x}}^t_3 \end{bmatrix}}_{\dot{\mathbf{q}}}$$ 
+
+which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
+
+## Deformation Gradient 
+
+The final necessary piece of the kinematic puzzle is the measure of deformation. You might be tempted to just compute $F = \frac{\partial \mathbf{x}^t}{\partial \mathbf{Y}}$ but this is going to get you in trouble. The dimensions of this matrix ($F \in \mathcal{R}^{3\times 2}$) make evaluating material models difficult since such models are *designed* to work for volumetric (re: square) deformation matrices. 
+
+There are lots of ways to handle this problem in [literature](https://animation.rwth-aachen.de/media/papers/2013-CAG-AdaptiveCloth.pdf) and in this assignment we will rely on one which is both simple and effective. 
+
+First let's remind ourselves that the functions which define barycentric coordinates require us to solve the linear system
+
+$$\begin{bmatrix}\left(\mathbf{Y}_1- \mathbf{Y}_0\right) & \left(\mathbf{Y}_1- \mathbf{Y}_0\right)\end{bmatrix}\begin{bmatrix}\phi_1\left(\mathbf{Y}\right)\\\phi_2\left(\mathbf{Y}\right)\end{bmatrix} = \mathbf{Y} - \mathbf{Y}_0$$
+
+To "square" our deformation gradient, we are going to "lift" the undeformed space of the cloth to 3d. **NOTE:** we are still going to use 2D triangles but now the undeformed vertex positions of those triangles will be given in 3d. Let's call the 3d undeformed vertex positions of our triangle mesh $\mathbf{X}_i$. So now, given any point in this weird 3d undeformed space, the second and third barycentric coordinates are given by 
+
+$$\underbrace{\begin{bmatrix}\left(\mathbf{X}_1- \mathbf{X}_0\right) & \left(\mathbf{X}_1- \mathbf{X}_0\right)\end{bmatrix}}_{T \in \mathcal{R}^{3 \times 2}}\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \mathbf{X} - \mathbf{X}_0$$.
+
+Ok, we've made everything worse. Now we can't even directly invert the right-hand side. But this is one of those cases wherein things had to get [worse before they get better](https://www.youtube.com/watch?v=uDIgS-Soo9Q). However, we can solve this system in a [least-squares](https://en.wikipedia.org/wiki/Least_squares) sense which gives us
+
+$$\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \left(T^{T}T\right)^{-1}T^T\left(\mathbf{X} - \mathbf{X}_0\right)$$
+
+which, when coupled with the fact that $\phi_0 = 1-\phi_1-\phi_2$ gives us everything we need. 
+
+This might seem like an esoteric, algebraic solution, but geometrically it is doing something really quite reasonable. 
+
+
+
 
 ## Kinetic Energy
 
