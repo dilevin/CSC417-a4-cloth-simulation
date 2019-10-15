@@ -250,22 +250,58 @@ $$\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\en
 
 which, when coupled with the fact that $\phi_0 = 1-\phi_1-\phi_2$ gives us everything we need. 
 
-This might seem like an esoteric, algebraic solution, but geometrically it is doing something really quite reasonable. 
-
-
-
+This might seem like an esoteric, algebraic solution, but geometrically it is doing something really quite reasonable. Any 3d point $\mathbf{X}$, which is on a triangle yields the same barycentric coordinates as the 2d solution. That's a good feature to have since we always, always, always [only calculate the world space position of the cloth at points on the cloth](https://en.wikipedia.org/wiki/Truism). For 3d points $\mathbf{X}$ that are off the cloth, this formulation projects them orthogonally (along the triangle normal) onto the cloth and returns the value for this projected cloth point. Because of this projection, the deformation of the cloth in the normal direction is zero, which makes sense, the discrete cloth has no thickness in this direction and cannot deform. However, because $\mathbf{X}$ is now 3d, the derivative $\frac{\partial \phi_i}{\partial \mathbf{X}}$ becomes $3 \times 3$ which means $F$ also becomes a $3\times 3$. This is much easier to deal with down the road. 
 
 ## Kinetic Energy
 
+Armed with the generalized velocities, the formula for the per-triangle kinetic energy is eerily similar to that of assignment 3. It's an integral of the local kinetic energy over the entire triangle
+
+$$ T_{triangle} = \dot{\mathbf{q}}\underbrace{\left(\int_{\mbox{triangle}}\rho N\left(\mathbf{X}\right)^T N\left(\mathbf{X}\right) dV\right)}_{M_e}\dot{\mathbf{q}} $$ 
+
+and can be compute analytically using a symbolic math package. The per-element mass matrices for the every cloth triangle can then be *assembled* into the mass matrix for the entire mesh. 
+
 ## Potential Energy
+
+For this assignment we will use a different type of material model to describe the elastic behaviour of the cloth. This is motivated by the fact that cloth is typically very resistant to stretching. For these materials, a linear stress-strain relationship is often desirable. Unfortunately, cloth triangles also rotate a lot (every time they fold-over for instance). Rotations are **NOT** linear and so a purely linear relationship will suffer from severe artifacts. To avoid this we will build a material model that only measures the in plane deformation of the cloth via its *principal stretches*. 
 
 ### Principal Stretches
 
-### Linear Elasticity
+Recall that in the previous assignment we used the right Cauchy strain tensor ($F^T F$) to measure deformation and the rationale for using this was that it measures the squared deformed length of an arbitrary, infinitesimal line of material, $\mathbf{dX}$. In other words, $|\mathbf{dx}|^2 = \mathbf{dX}^T \left(F^T F\right)\mathbf{dX}$.  Because $F$ is symmetric and positive definite, we can perform an [eigendecomposition](https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix) such that $F^T F = U \Lambda U^T$ where $V$ is the orthogonal matrix of eigenvectors and $\Lambda$ is the diagonal matrix of eigenvalues. This means we can think of this squared length as $|\mathbf{dx}|^2 = \hat{\mathbf{dX}}^T \Lambda \hat{\mathbf{dX}}$ where $\hat{\mathbf{dX}}=U^T\mathbf{dX}$. In other words, if we transform $\mathbf{dX}$ just right, its deformation is completely characterized by $\Lambda$. 
 
-### Co-Rotational Linear Elasticity 
+$\Lambda$ are the eigenvalues of $F^T F$ and also the squared [*singular values*](https://en.wikipedia.org/wiki/Singular_value_decomposition) of $F$. We call these singular values of $F$ the [principal stretches](http://www.femdefo.org). They measure deformation independently of the orientation (or rotation/reflection) of the finite element. These rigid motions are encapsulated by $U$ which we will ignore during the construction of our material model. 
 
-### Derivatives of Co-Rotational Models 
+### Linear Elasticity without the Pesky Rotations
+
+Now we can formulate a linear elastic model using the principal stretches which "filters out" any rotational components. Much like the Neohookean material model, this model will have one energy term which measures deformation and one energy term that tries to preserve volume (well area in the case of cloth). We already know we can measure deformation using the principal stretches. We also know that the determinant of $F$ measures the change in volume of a 3D object. In the volumetric case this determinant is just the product of the principal stretches. But first, we need to understand some specifics about the deformation gradient of cloth.
+
+Recall that our deformation gradient for a cloth triangle is computed using a least squares projection. This is nice because we still have a $3 \times 3$ matrix on which to perform singular value decomposition on (and later ... (*shudder*) take the derivative of). It's problematic because this deformation gradient has a nullspace normal to the triangle (all points normal to the triangle are mapped to the same barycentric coordinate).  This means that, forever and always, **one of the singular values of $F$ will be zero**. Now if we assume that our triangle is not deformed to be inside out or squished to a line or a point, then this zero singular value will always be the last singular value returned by any reasonable SVD code (Eigen is pretty reasonable). Thus rather than use all three principal values in our material model, we will only use the first 2. This gives us the following material model 
+
+$$\psi\left(s_0, s_1\right) = \lambda\sum_{i=0}^1\left(s_i-1\right)^2 + \mu\left(s_0\cdot s_1 -1\right) $$
+
+where $\lambda$ and $\mu$ are the material properties for the cloth. The first term in this model attempts to keep $s_0$ and $s_1$ close to one (limiting deformation) while the second term is attempting to preserve the area of the deformed triangle. 
+
+### The Gradient of Principal Stretch Models 
+
+The strain energy density for principal stretch models, like the one above, are relatively easy to implement and understand. This is a big reason we like them in graphics. We'll also see that the gradient of this model (needed for force computation) is also pretty easy to compute.
+
+Really, the derivative we need to understand how to compute is $frac{\partial \psi}{\partial F}$. Once we have this we can use $\frac{\partial F}{\partial \mathbf{q}}$ to compute the gradient wrt to the generalized coordinates.  Conveniently, we have the following for principal stretch models.
+
+$$\frac{\partial \psi}{\partial F} = U\underbrace{\begin{bmatrix}\frac{\partial \psi}{\partial s_0} & 0 & 0 \\ 0 & \frac{\partial \psi}{\partial s_1} & 0 \\ 0 & 0 & \frac{\partial \psi}{\partial s_2}\end{bmatrix}}_{dS}V^T $$ 
+
+where $F = USV^T$ is the singular value decomposition.
+
+### The Hessian of Principal Stretch Models
+
+Unfortunately, the gradient of the principal stretch energy is not enough. That's because our favourite implicit integrators require second order information to provide the stability and performance we crave in computer graphics. This is where things get messy. The good news is that, if we can just compute $\frac{\partial \psi}{\partial F \partial F}$ then we can use $\frac{\partial F}{\partial \mathbf{q}}$  to compute our Hessian wrt to the generalized coordinates (this follows from the linearity of the FEM formulation wrt to the generalized coordinates).  This formula is going to get ugly so, in an attempt to make it somewhat clear, we are going to consider derivatives wrt to single entries of $F$, denoted $F_{ij}$. In this context we are trying to compute
+
+$$\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\underbrace{\frac{\partial  S}{\partial F_{ij}}}_{\mbox{Diagonal}}\begin{bmatrix}\frac{\partial^2 \psi}{\partial s_0^2} & 0 & 0 \\ 0 & \frac{\partial^2 \psi}{\partial s_1^2} & 0 \\ 0 & 0 & \frac{\partial^2 \psi}{\partial s_2^2}\end{bmatrix}V^T + UdS \frac{\partial }{\partial F_{ij}}^T$$
+
+
+Implementing this derivative correctly is tricky and it has a different form based on whether your $F$ matrix is square or rectangular. This is one big reason that the $3 \times 3$ deformation gradient we use in this assignment is desirable. It allows one to use the same singular value decomposition code for volumetric and cloth models. 
+
+The first thing to keep in mind when looking at this formula is **DON'T PANIC**. It's a straight forward application of the chain rule, just a little nastier than usual. The second thing to keep in mind is that all derivatives wrt to $s_2$ are zero (it never changes, it's always 0). The final thing to keep in mind is that **I am giving you the code to compute SVD derivatives in dsvd.h/dsvd/cpp**.  
+
+If we define the svd of a matrix as $F = USV^T$, this code returns $\frac{\partial U}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$, $\frac{\partial V}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$ and $\frac{\partial S}{\partial F}\in\mathcal{R}^{3\times 3 \times 3}$. Yes this code returns 3 and four dimensional tensors storing this quantities, yes I said never to do this in class, consider this the exception that makes the rule. 
 
 ## Collision Detection with Spheres
 
