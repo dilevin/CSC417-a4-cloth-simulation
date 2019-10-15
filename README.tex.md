@@ -238,11 +238,11 @@ There are lots of ways to handle this problem in [literature](https://animation.
 
 First let's remind ourselves that the functions which define barycentric coordinates require us to solve the linear system
 
-$$\begin{bmatrix}\left(\mathbf{Y}_1- \mathbf{Y}_0\right) & \left(\mathbf{Y}_1- \mathbf{Y}_0\right)\end{bmatrix}\begin{bmatrix}\phi_1\left(\mathbf{Y}\right)\\\phi_2\left(\mathbf{Y}\right)\end{bmatrix} = \mathbf{Y} - \mathbf{Y}_0$$
+$$\begin{bmatrix}\left(\mathbf{Y}_1- \mathbf{Y}_0\right) & \left(\mathbf{Y}_2- \mathbf{Y}_0\right)\end{bmatrix}\begin{bmatrix}\phi_1\left(\mathbf{Y}\right)\\\phi_2\left(\mathbf{Y}\right)\end{bmatrix} = \mathbf{Y} - \mathbf{Y}_0$$
 
 To "square" our deformation gradient, we are going to "lift" the undeformed space of the cloth to 3d. **NOTE:** we are still going to use 2D triangles but now the undeformed vertex positions of those triangles will be given in 3d. Let's call the 3d undeformed vertex positions of our triangle mesh $\mathbf{X}_i$. So now, given any point in this weird 3d undeformed space, the second and third barycentric coordinates are given by 
 
-$$\underbrace{\begin{bmatrix}\left(\mathbf{X}_1- \mathbf{X}_0\right) & \left(\mathbf{X}_1- \mathbf{X}_0\right)\end{bmatrix}}_{T \in \mathcal{R}^{3 \times 2}}\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \mathbf{X} - \mathbf{X}_0$$.
+$$\underbrace{\begin{bmatrix}\left(\mathbf{X}_1- \mathbf{X}_0\right) & \left(\mathbf{X}_2- \mathbf{X}_0\right)\end{bmatrix}}_{T \in \mathcal{R}^{3 \times 2}}\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \mathbf{X} - \mathbf{X}_0$$.
 
 Ok, we've made everything worse. Now we can't even directly invert the right-hand side. But this is one of those cases wherein things had to get [worse before they get better](https://www.youtube.com/watch?v=uDIgS-Soo9Q). However, we can solve this system in a [least-squares](https://en.wikipedia.org/wiki/Least_squares) sense which gives us
 
@@ -296,16 +296,27 @@ Unfortunately, the gradient of the principal stretch energy is not enough. That'
 
 $$\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\underbrace{\frac{\partial  S}{\partial F_{ij}}}_{\mbox{Diagonal}}\begin{bmatrix}\frac{\partial^2 \psi}{\partial s_0^2} & 0 & 0 \\ 0 & \frac{\partial^2 \psi}{\partial s_1^2} & 0 \\ 0 & 0 & \frac{\partial^2 \psi}{\partial s_2^2}\end{bmatrix}V^T + UdS \frac{\partial }{\partial F_{ij}}^T$$
 
+The first thing to keep in mind when looking at this formula is **DON'T PANIC**. It's a straight forward application of the chain rule, just a little nastier than usual. The second thing to keep in mind is that all derivatives wrt to $s_2$ are zero (it never changes, it's always 0). The final thing to keep in mind is that **I am giving you the code to compute SVD derivatives in dsvd.h/dsvd.cpp**.  
 
-Implementing this derivative correctly is tricky and it has a different form based on whether your $F$ matrix is square or rectangular. This is one big reason that the $3 \times 3$ deformation gradient we use in this assignment is desirable. It allows one to use the same singular value decomposition code for volumetric and cloth models. 
+If we define the svd of a matrix as $F = USV^T$, this code returns $\frac{\partial U}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$, $\frac{\partial V}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$ and $\frac{\partial S}{\partial F}\in\mathcal{R}^{3\times 3 \times 3}$. Yes this code returns 3 and four dimensional tensors storing this quantities, yes I said never to do this in class, consider this the exception that makes the rule.  The latter two indices on each tensor are the $i$ and $j$ indices used in the formula above. 
 
-The first thing to keep in mind when looking at this formula is **DON'T PANIC**. It's a straight forward application of the chain rule, just a little nastier than usual. The second thing to keep in mind is that all derivatives wrt to $s_2$ are zero (it never changes, it's always 0). The final thing to keep in mind is that **I am giving you the code to compute SVD derivatives in dsvd.h/dsvd/cpp**.  
-
-If we define the svd of a matrix as $F = USV^T$, this code returns $\frac{\partial U}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$, $\frac{\partial V}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$ and $\frac{\partial S}{\partial F}\in\mathcal{R}^{3\times 3 \times 3}$. Yes this code returns 3 and four dimensional tensors storing this quantities, yes I said never to do this in class, consider this the exception that makes the rule. 
+The hardest part of implementing this gradient correctly is handling the SVD terms. These gradients have a different form based on whether your $F$ matrix is square or rectangular. This is one big reason that the $3 \times 3$ deformation gradient we use in this assignment is desirable. It allows one to use the same singular value decomposition code for volumetric and cloth models. 
 
 ## Collision Detection with Spheres
 
+To make this assignment a little more visually interesting, you will implement simple collision detection and resolution with an analytical sphere. **Collision Detection** is the process of detecting contact between two or more objects in the scene and **Collision Resolution** is the process of modifying the motion of the object in response to these detected collisions.  
+
+For this assignment we will implement per-vertex collision detection with the sphere. This is as simple as detecting if the distance from the center of the sphere to any vertex in your mesh is less than the radius of the sphere. If you detect such a collision, you need to store an **index** to the colliding vertex, along with the outward facing **contact normal**($\mathbf{n}$). In this case, the outward facing contact normal is the sphere normal at the point of contact. 
+
 ## Collision Resolution 
+
+The minimal goal of any collision resolution algorithm is to prevent collisions from getting worse locally. To do this we will implement a simple *velocity filter* approach. Velocity filters are so named because the "filter out" components of an objects velocity that will increase the severity of a collision. Given a vertex that is colliding with our sphere, the only way that the collision can get worse locally is if that vertex moves *into* the sphere. One way we can check if this is happening is to compute the projection of the vertex velocity onto the outward facing contact normal ($\mathbf{n}^T\dot{\mathbf{q}}_i$, $i$ selects the $i^th$ contacting vertex). If this number is $>0$ we are OK, the vertex is moving away from the sphere. If this number is $<0$ we better do something. 
+
+The thing we will do is project out, or filter out, the component of the velocity moving in the negative, normal direction like so:
+
+$$\dot{\mathbf{q}}^{\mbox{filtered}}_i = \dot{\mathbf{q}}_i - \mathbf{n}\mathbf{n}^T\dot{\mathbf{q}}_i$$
+
+This "fixes" the collision. This approach to collision resolution is fast but for more complicated scenes it is fraught with peril. For instance it doesn't take into account how it is deforming the simulated object which can cause big headaches when objects are stiff or rigid. We'll see a cleaner mathematical approach to content in the final assignment of the course.
 
 ## Assignment Implementation
 
