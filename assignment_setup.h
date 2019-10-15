@@ -255,7 +255,7 @@ inline void assignment_setup(int argc, char **argv, Eigen::VectorXd &q, Eigen::V
 
     //igl additional menu setup
     // Add content to the default menu window
-    Visualize::viewer_menu().callback_draw_custom_window = [&]()
+    /*Visualize::viewer_menu().callback_draw_custom_window = [&]()
     {
         // Define next window position + size
         ImGui::SetNextWindowPos(ImVec2(180.f * Visualize::viewer_menu().menu_scaling(), 10), ImGuiSetCond_FirstUseEver);
@@ -277,7 +277,7 @@ inline void assignment_setup(int argc, char **argv, Eigen::VectorXd &q, Eigen::V
         Visualize::plot_energy("T+V", 3, ImVec2(-15,10), ImVec2(0,4e8), ImGui::GetColorU32(ImGuiCol_ColumnActive));
 
         ImGui::End();
-    };
+    };*/
 
     Visualize::viewer().callback_key_down = key_down_callback;
 
