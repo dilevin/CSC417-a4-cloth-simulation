@@ -200,9 +200,60 @@ Somewhat sadly, it is difficult to find a comprehensive resource for modern clot
 
 ## Finite Elements on Manifolds 
 
+Our major challenge in this assignment arises from the difference in the dimensionality of the cloth material and the world (deformed) space (**NOTE:** I use the terms world and deformed space interchangeably). Cloth is locally two-dimensional (*2d*) while the world  is [*3d*](https://www.quora.com/What-are-all-of-Calvins-alter-egos).  What will be comforting is that, a relatively straight-forward application of the finite-element-method (FEM) will allow us to build a passable dynamic cloth simulator. 
+
 ## Triangular Finite Elements 
 
+The previous assignment applied FEM to *volumetric* simulation -- the simulation of objects with geometry of dimension equal to that of the world space (i.e our bunny and armadillo were 3d as was the world). In this case our finite elements were also volumetric ... they were tetrahedra in the undeformed space of the simulated object. 
+
+In the case of cloth, the underformed  geometry is of different dimension (2d) than the world space (3d). Because our finite elements divide up the undeformed space, they also need to be 2d. As such we will use [triangles](https://en.wikipedia.org/wiki/Triangle), not tetrahedra as our elements.
+
 ## Generalized Coordinates and Velocities 
+
+Just as in the [previous assignment](https://github.com/dilevin/CSC2549-a3-finite-elements-3d), we need to choose basis, or shape functions with which to approximate functions on our, now triangular, mesh. A triangle as 3 nodes our approximations become
+
+<p align="center"><img src="/tex/1767c7f7922c97563d66b8446ba75840.svg?invert_in_darkmode&sanitize=true" align=middle width=147.58684215pt height=47.35857885pt/></p> 
+
+where <img src="/tex/c83e439282bef5aadf55a91521506c1a.svg?invert_in_darkmode&sanitize=true" align=middle width=14.44544309999999pt height=22.831056599999986pt/> are the [barycentric coordinates](https://en.wikipedia.org/wiki/Barycentric_coordinate_system) for a 2D triangle and <img src="/tex/58c2313bc1ea66cc4d86d27f83c1941d.svg?invert_in_darkmode&sanitize=true" align=middle width=55.34000504999999pt height=26.76175259999998pt/> is the 2d coordinate in the undeformed space. 
+
+Our goal is to be able to estimate the 3d world space position of any part of this cloth triangle (for any value of <img src="/tex/319d907db67f3000780e9b2d1a2816d9.svg?invert_in_darkmode&sanitize=true" align=middle width=14.764759349999988pt height=22.55708729999998pt/> in the triangle). Using our FEM basis, this becomes
+
+<p align="center"><img src="/tex/e380f5951fb9f765922182550d7fa939.svg?invert_in_darkmode&sanitize=true" align=middle width=155.77825395pt height=47.35857885pt/></p>
+
+where <img src="/tex/07fa8f51f4cd0e31f63743c0638a3388.svg?invert_in_darkmode&sanitize=true" align=middle width=56.34005519999999pt height=26.76175259999998pt/> are the 3d, per-vertex positions of the cloth mesh at time <img src="/tex/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode&sanitize=true" align=middle width=5.936097749999991pt height=20.221802699999984pt/>. This gives a mapping from the 2d space of the undeformed cloth to the 3d world space.  As usual, we choose the **generalized coordinates** (<img src="/tex/84a62034abeb6bfffada277b45a096c7.svg?invert_in_darkmode&sanitize=true" align=middle width=50.55236834999999pt height=26.76175259999998pt/>) to be the stacked vector of vertex positions, which lets us rewrite the above expression as 
+
+<p align="center"><img src="/tex/99876db7d3f4ab121c85347e0275a67f.svg?invert_in_darkmode&sanitize=true" align=middle width=332.70013754999997pt height=102.84090135pt/></p>
+ 
+The velocity of the cloth, at any point <img src="/tex/319d907db67f3000780e9b2d1a2816d9.svg?invert_in_darkmode&sanitize=true" align=middle width=14.764759349999988pt height=22.55708729999998pt/> is then given by the total time derivative: 
+
+<p align="center"><img src="/tex/873246b3685f69b2a152de8f0199546c.svg?invert_in_darkmode&sanitize=true" align=middle width=332.96270534999996pt height=103.61714219999999pt/></p> 
+
+which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
+
+## Deformation Gradient 
+
+The final necessary piece of the kinematic puzzle is the measure of deformation. You might be tempted to just compute <img src="/tex/247ed86bbeef7615018d6bc51947544a.svg?invert_in_darkmode&sanitize=true" align=middle width=57.78279374999998pt height=32.976995699999996pt/> but this is going to get you in trouble. The dimensions of this matrix (<img src="/tex/88787d1576b44fdadc099c2c2d5cd9f6.svg?invert_in_darkmode&sanitize=true" align=middle width=70.25574269999998pt height=26.76175259999998pt/>) make evaluating material models difficult since such models are *designed* to work for volumetric (re: square) deformation matrices. 
+
+There are lots of ways to handle this problem in [literature](https://animation.rwth-aachen.de/media/papers/2013-CAG-AdaptiveCloth.pdf) and in this assignment we will rely on one which is both simple and effective. 
+
+First let's remind ourselves that the functions which define barycentric coordinates require us to solve the linear system
+
+<p align="center"><img src="/tex/7d6ab38d6d05964698ae8a092d1948fc.svg?invert_in_darkmode&sanitize=true" align=middle width=327.7252077pt height=39.452455349999994pt/></p>
+
+To "square" our deformation gradient, we are going to "lift" the undeformed space of the cloth to 3d. **NOTE:** we are still going to use 2D triangles but now the undeformed vertex positions of those triangles will be given in 3d. Let's call the 3d undeformed vertex positions of our triangle mesh <img src="/tex/9b01119ffd35fe6d8a8795a24fc11616.svg?invert_in_darkmode&sanitize=true" align=middle width=18.943064249999992pt height=22.55708729999998pt/>. So now, given any point in this weird 3d undeformed space, the second and third barycentric coordinates are given by 
+
+<p align="center"><img src="/tex/e1df9ab5f065f666cdd061d6ef23f8f4.svg?invert_in_darkmode&sanitize=true" align=middle width=326.7800316pt height=53.80252679999999pt/></p>.
+
+Ok, we've made everything worse. Now we can't even directly invert the right-hand side. But this is one of those cases wherein things had to get [worse before they get better](https://www.youtube.com/watch?v=uDIgS-Soo9Q). However, we can solve this system in a [least-squares](https://en.wikipedia.org/wiki/Least_squares) sense which gives us
+
+<p align="center"><img src="/tex/79361f938b80de1c32bb7d7724ce3590.svg?invert_in_darkmode&sanitize=true" align=middle width=249.66638894999997pt height=39.452455349999994pt/></p>
+
+which, when coupled with the fact that <img src="/tex/358bf7b214f6e3ed24776b7ec9a31866.svg?invert_in_darkmode&sanitize=true" align=middle width=121.00431914999999pt height=22.831056599999986pt/> gives us everything we need. 
+
+This might seem like an esoteric, algebraic solution, but geometrically it is doing something really quite reasonable. 
+
+
+
 
 ## Kinetic Energy
 
