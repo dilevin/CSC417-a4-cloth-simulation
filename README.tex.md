@@ -278,9 +278,9 @@ Now we can formulate a linear elastic model using the principal stretches which 
 
 Recall that our deformation gradient for a cloth triangle is computed using a least squares projection. This is nice because we still have a $3 \times 3$ matrix on which to perform singular value decomposition on (and later ... (*shudder*) take the derivative of). It's problematic because this deformation gradient has a nullspace normal to the triangle (all points normal to the triangle are mapped to the same barycentric coordinate).  This means that, forever and always, **one of the singular values of $F$ will be zero**. Now if we assume that our triangle is not deformed to be inside out or squished to a line or a point, then this zero singular value will always be the last singular value returned by any reasonable SVD code (Eigen is pretty reasonable). Thus rather than use all three principal values in our material model, we will only use the first 2. This gives us the following material model 
 
-$$\psi\left(s_0, s_1\right) = \lambda\sum_{i=0}^1\left(s_i-1\right)^2 + \mu\left(s_0\cdot s_1 -1\right) $$
+$$\psi\left(s_0, s_1\right) = \mu\sum_{i=0}^1\left(s_i-1\right)^2 + \frac{\lambda}{2}\left(s_0 +  s_1 -2\right)^2 $$
 
-where $\lambda$ and $\mu$ are the material properties for the cloth. The first term in this model attempts to keep $s_0$ and $s_1$ close to one (limiting deformation) while the second term is attempting to preserve the area of the deformed triangle. 
+where $\lambda$ and $\mu$ are the material properties for the cloth. The first term in this model attempts to keep $s_0$ and $s_1$ close to one (limiting deformation) while the second term is attempting to preserve the area of the deformed triangle (it's a linearization of the determinant). This model is called  **co-rotational linear elasticity** because it is linear in the principal stretches but rotates *with* each finite element. When we use energy models to measure the in-plane stretching of the cloth (or membrane), we often refer to them as membrane energies.  
 
 ### The Gradient of Principal Stretch Models 
 
@@ -296,7 +296,11 @@ where $F = USV^T$ is the singular value decomposition.
 
 Unfortunately, the gradient of the principal stretch energy is not enough. That's because our favourite implicit integrators require second order information to provide the stability and performance we crave in computer graphics. This is where things get messy. The good news is that, if we can just compute $\frac{\partial \psi}{\partial F \partial F}$ then we can use $\frac{\partial F}{\partial \mathbf{q}}$  to compute our Hessian wrt to the generalized coordinates (this follows from the linearity of the FEM formulation wrt to the generalized coordinates).  This formula is going to get ugly so, in an attempt to make it somewhat clear, we are going to consider derivatives wrt to single entries of $F$, denoted $F_{ij}$. In this context we are trying to compute
 
-$$\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\underbrace{\frac{\partial  S}{\partial F_{ij}}}_{\mbox{Diagonal}}\begin{bmatrix}\frac{\partial^2 \psi}{\partial s_0^2} & 0 & 0 \\ 0 & \frac{\partial^2 \psi}{\partial s_1^2} & 0 \\ 0 & 0 & \frac{\partial^2 \psi}{\partial s_2^2}\end{bmatrix}V^T + UdS \frac{\partial }{\partial F_{ij}}^T$$
+$$\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\mbox{diag}\left(\mathbf{ds}_{ij}\right)V^T + UdS \frac{\partial }{\partial F_{ij}}^T$$
+
+Here $\mbox{diag}\left(\right)$ takes a $3\times 1$ vector as input and converts it into a diagonal matrix, with the entries of the matrix on the diagonal. In our case, we define $\mathbf{ds}$ as 
+
+$$ \mathbf{ds}_{ij} = \begin{bmatrix}\frac{\partial^2 \psi}{\partial s_0^2} & \frac{\partial^2 \psi}{\partial s_0\partial s_1} & \frac{\partial^2 \psi}{\partial s_0\partial s_2} \\ \frac{\partial^2 \psi}{\partial s_0\partial s_1} & \frac{\partial^2 \psi}{\partial s_1^2} & \frac{\partial^2 \psi}{\partial s_1\partial s_2} \\ \frac{\partial^2 \psi}{\partial s_0\partial s_2} & \frac{\partial^2 \psi}{\partial s_1\partial s_12} & \frac{\partial^2 \psi}{\partial s_2^2}\end{bmatrix}\begin{bmatrix} \frac{\partial s_0}{\partial F_{ij}} \\ \frac{\partial s_1}{\partial F_{ij}} \\ \frac{\partial s_2}{\partial F_{ij}}\end{bmatrix}$$
 
 The first thing to keep in mind when looking at this formula is **DON'T PANIC**. It's a straight forward application of the chain rule, just a little nastier than usual. The second thing to keep in mind is that all derivatives wrt to $s_2$ are zero (it never changes, it's always 0). The final thing to keep in mind is that **I am giving you the code to compute SVD derivatives in dsvd.h/dsvd.cpp**.  
 
