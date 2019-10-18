@@ -203,7 +203,7 @@ where $F = USV^T$ is the singular value decomposition.
 
 Unfortunately, the gradient of the principal stretch energy is not enough. That's because our favourite implicit integrators require second order information to provide the stability and performance we crave in computer graphics. This is where things get messy. The good news is that, if we can just compute $\frac{\partial \psi}{\partial F \partial F}$ then we can use $\frac{\partial F}{\partial \mathbf{q}}$  to compute our Hessian wrt to the generalized coordinates (this follows from the linearity of the FEM formulation wrt to the generalized coordinates).  This formula is going to get ugly so, in an attempt to make it somewhat clear, we are going to consider derivatives wrt to single entries of $F$, denoted $F_{ij}$. In this context we are trying to compute
 
-$$\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\mbox{diag}\left(\mathbf{ds}_{ij}\right)V^T + UdS \frac{\partial }{\partial F_{ij}}^T$$
+$$\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\mbox{diag}\left(\mathbf{ds}_{ij}\right)V^T + UdS \frac{\partial V}{\partial F_{ij}}^T$$
 
 Here $\mbox{diag}\left(\right)$ takes a $3\times 1$ vector as input and converts it into a diagonal matrix, with the entries of the matrix on the diagonal. In our case, we define $\mathbf{ds}$ as 
 
