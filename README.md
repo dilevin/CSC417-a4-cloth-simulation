@@ -245,10 +245,6 @@ Piecewise constant gradient matrix for linear shape functions. Row <img src="/te
 
 The kinetic energy of the whole cost mesh.
 
-###  V_cloth_gravity.cpp
-
-The potential energy due to gravity acting on the cloth mesh. 
-
 ###  dV_cloth_gravity_dq.cpp
 
 Gradient of potential energy due to gravity
