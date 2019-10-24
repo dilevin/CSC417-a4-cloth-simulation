@@ -121,7 +121,7 @@ inline void simulate(Eigen::VectorXd &q, Eigen::VectorXd &qdot, double dt, doubl
     auto force = [&](Eigen::VectorXd &f, Eigen::Ref<const Eigen::VectorXd> q2, Eigen::Ref<const Eigen::VectorXd> qdot2) { 
         
             assemble_forces(f, P.transpose()*q2+x0, P.transpose()*qdot2, dX, V, F, a0, C,D);
-            f += gravity;
+            f -= gravity;
         
             for(unsigned int pickedi = 0; pickedi < spring_points.size(); pickedi++) {
                 dV_spring_particle_particle_dq(dV_mouse, spring_points[pickedi].first, (P.transpose()*q2+x0).segment<3>(spring_points[pickedi].second), 0.0, k_selected_now);
