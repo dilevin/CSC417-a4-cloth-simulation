@@ -131,11 +131,11 @@ Our goal is to be able to estimate the 3d world space position of any part of th
 
 where <img src="/tex/07fa8f51f4cd0e31f63743c0638a3388.svg?invert_in_darkmode&sanitize=true" align=middle width=56.34005519999999pt height=26.76175259999998pt/> are the 3d, per-vertex positions of the cloth mesh at time <img src="/tex/4f4f4e395762a3af4575de74c019ebb5.svg?invert_in_darkmode&sanitize=true" align=middle width=5.936097749999991pt height=20.221802699999984pt/>. This gives a mapping from the 2d space of the undeformed cloth to the 3d world space.  As usual, we choose the **generalized coordinates** (<img src="/tex/84a62034abeb6bfffada277b45a096c7.svg?invert_in_darkmode&sanitize=true" align=middle width=50.55236834999999pt height=26.76175259999998pt/>) to be the stacked vector of vertex positions, which lets us rewrite the above expression as 
 
-<p align="center"><img src="/tex/99876db7d3f4ab121c85347e0275a67f.svg?invert_in_darkmode&sanitize=true" align=middle width=332.70013754999997pt height=102.84090135pt/></p>
+<p align="center"><img src="/tex/56521ffe4b9da108377a9739876d408a.svg?invert_in_darkmode&sanitize=true" align=middle width=332.70013754999997pt height=83.11467284999999pt/></p>
  
 The velocity of the cloth, at any point <img src="/tex/319d907db67f3000780e9b2d1a2816d9.svg?invert_in_darkmode&sanitize=true" align=middle width=14.764759349999988pt height=22.55708729999998pt/> is then given by the total time derivative: 
 
-<p align="center"><img src="/tex/873246b3685f69b2a152de8f0199546c.svg?invert_in_darkmode&sanitize=true" align=middle width=332.96270534999996pt height=103.61714219999999pt/></p> 
+<p align="center"><img src="/tex/d5b9b96cdc2cdabfd94eaaedae1a759d.svg?invert_in_darkmode&sanitize=true" align=middle width=332.96270534999996pt height=83.89091535pt/></p> 
 
 which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
 
