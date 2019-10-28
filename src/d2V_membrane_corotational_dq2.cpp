@@ -14,6 +14,8 @@ void d2V_membrane_corotational_dq2(Eigen::Matrix99d &H, Eigen::Ref<const Eigen::
     
     double tol = 1e-5;
     
+    //Compute SVD of F here
+    
     //deal with singularity in the svd gradient
     if(std::fabs(S[0] - S[1]) < tol || std::fabs(S[1] - S[2]) < tol || std::fabs(S[0] - S[2]) < tol) {
         F += Eigen::Matrix3d::Random()*tol;
