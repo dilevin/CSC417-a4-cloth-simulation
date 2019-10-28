@@ -131,11 +131,11 @@ $$ \mathbf{x}^t\left(\mathbf{Y}\right)=\sum_{i=0}^{2}\mathbf{x}^t_i\phi_i\left(\
 
 where $\mathbf{x}^t_i \in \mathcal{R}^3$ are the 3d, per-vertex positions of the cloth mesh at time $t$. This gives a mapping from the 2d space of the undeformed cloth to the 3d world space.  As usual, we choose the **generalized coordinates** ($\mathbf{q} \in \mathcal{R}^9$) to be the stacked vector of vertex positions, which lets us rewrite the above expression as 
 
-$$\mathbf{x}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \\ \dot{\mathbf{x}}^t_3 \end{bmatrix}}_{\mathbf{q}}$$
+$$\mathbf{x}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \mathbf{x}^t_0 \\ \mathbf{x}^t_1 \\ \mathbf{x}^t_2 \end{bmatrix}}_{\mathbf{q}}$$
  
 The velocity of the cloth, at any point $\mathbf{Y}$ is then given by the total time derivative: 
 
-$$\mathbf{v}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \\ \dot{\mathbf{x}}^t_3 \end{bmatrix}}_{\dot{\mathbf{q}}}$$ 
+$$\mathbf{v}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \end{bmatrix}}_{\dot{\mathbf{q}}}$$ 
 
 which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
 
@@ -175,9 +175,9 @@ For this assignment we will use a different type of material model to describe t
 
 ### Principal Stretches
 
-Recall that in the previous assignment we used the right Cauchy strain tensor ($F^T F$) to measure deformation and the rationale for using this was that it measures the squared deformed length of an arbitrary, infinitesimal line of material, $\mathbf{dX}$. In other words, $|\mathbf{dx}|^2 = \mathbf{dX}^T \left(F^T F\right)\mathbf{dX}$.  Because $F$ is symmetric and positive definite, we can perform an [eigendecomposition](https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix) such that $F^T F = U \Lambda U^T$ where $V$ is the orthogonal matrix of eigenvectors and $\Lambda$ is the diagonal matrix of eigenvalues. This means we can think of this squared length as $|\mathbf{dx}|^2 = \hat{\mathbf{dX}}^T \Lambda \hat{\mathbf{dX}}$ where $\hat{\mathbf{dX}}=U^T\mathbf{dX}$. In other words, if we transform $\mathbf{dX}$ just right, its deformation is completely characterized by $\Lambda$. 
+Recall that in the previous assignment we used the right Cauchy strain tensor ($F^T F$) to measure deformation and the rationale for using this was that it measures the squared deformed length of an arbitrary, infinitesimal line of material, $\mathbf{dX}$. In other words, $|\mathbf{dx}|^2 = \mathbf{dX}^T \left(F^T F\right)\mathbf{dX}$.  Because $F$ is symmetric and positive definite, we can perform an [eigendecomposition](https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix) such that $F^T F = V \Lambda V^T$ where $V$ is the orthogonal matrix of eigenvectors and $\Lambda$ is the diagonal matrix of eigenvalues. This means we can think of this squared length as $|\mathbf{dx}|^2 = \hat{\mathbf{dX}}^T \Lambda \hat{\mathbf{dX}}$ where $\hat{\mathbf{dX}}=U^T\mathbf{dX}$. In other words, if we transform $\mathbf{dX}$ just right, its deformation is completely characterized by $\Lambda$. 
 
-$\Lambda$ are the eigenvalues of $F^T F$ and also the squared [*singular values*](https://en.wikipedia.org/wiki/Singular_value_decomposition) of $F$. We call these singular values of $F$ the [principal stretches](http://www.femdefo.org). They measure deformation independently of the orientation (or rotation/reflection) of the finite element. These rigid motions are encapsulated by $U$ which we will ignore during the construction of our material model. 
+$\Lambda$ are the eigenvalues of $F^T F$ and also the squared [*singular values*](https://en.wikipedia.org/wiki/Singular_value_decomposition) of $F$. We call these singular values of $F$ the [principal stretches](http://www.femdefo.org). They measure deformation independently of the orientation (or rotation/reflection) of the finite element. 
 
 ### Linear Elasticity without the Pesky Rotations
 
