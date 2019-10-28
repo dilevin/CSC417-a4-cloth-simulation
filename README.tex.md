@@ -131,11 +131,11 @@ $$ \mathbf{x}^t\left(\mathbf{Y}\right)=\sum_{i=0}^{2}\mathbf{x}^t_i\phi_i\left(\
 
 where $\mathbf{x}^t_i \in \mathcal{R}^3$ are the 3d, per-vertex positions of the cloth mesh at time $t$. This gives a mapping from the 2d space of the undeformed cloth to the 3d world space.  As usual, we choose the **generalized coordinates** ($\mathbf{q} \in \mathcal{R}^9$) to be the stacked vector of vertex positions, which lets us rewrite the above expression as 
 
-$$\mathbf{x}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \\ \dot{\mathbf{x}}^t_3 \end{bmatrix}}_{\mathbf{q}}$$
+$$\mathbf{x}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \end{bmatrix}}_{\mathbf{q}}$$
  
 The velocity of the cloth, at any point $\mathbf{Y}$ is then given by the total time derivative: 
 
-$$\mathbf{v}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \\ \dot{\mathbf{x}}^t_3 \end{bmatrix}}_{\dot{\mathbf{q}}}$$ 
+$$\mathbf{v}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \end{bmatrix}}_{\dot{\mathbf{q}}}$$ 
 
 which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
 
