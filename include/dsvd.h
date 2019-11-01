@@ -1,6 +1,9 @@
 #include <Eigen/Dense>
 #include <EigenTypes.h>
 
+//NOTE: Then tensor data structure stores arrays of matrix/vectors.
+//      For a 3D tensor, such as dS, the entry dS[i][j] = dS/dF_ij, which is a vector
+//      For a 4D tensors, such as dV, the entry dV[i][j] = dV/dF_ij which is a matrix
 //Input:
 //  F - this function computes the gradient of svd(F), where F is a 3x3 matrix. 
 //Output (for the definition of the tensorial types, see EigenTypes.h):
