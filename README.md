@@ -193,7 +193,7 @@ where <img src="/tex/fd8be73b54f5436a5cd2e73ba9b6bfa9.svg?invert_in_darkmode&san
 
 The strain energy density for principal stretch models, like the one above, are relatively easy to implement and understand. This is a big reason we like them in graphics. We'll also see that the gradient of this model (needed for force computation) is also pretty easy to compute.
 
-Really, the derivative we need to understand how to compute is <img src="/tex/3ccec9688059decb33d458cf7478ec22.svg?invert_in_darkmode&sanitize=true" align=middle width=76.92564329999999pt height=22.831056599999986pt/>. Once we have this we can use <img src="/tex/b38dda0a0c1ab15d9dae0b9b9e8aa1dc.svg?invert_in_darkmode&sanitize=true" align=middle width=17.83399365pt height=28.92634470000001pt/> to compute the gradient wrt to the generalized coordinates.  Conveniently, we have the following for principal stretch models.
+Really, the derivative we need to understand how to compute is <img src="/tex/9a05c8a8b310cb0d9f34636450b3d442.svg?invert_in_darkmode&sanitize=true" align=middle width=17.83399365pt height=30.648287999999997pt/>. Once we have this we can use <img src="/tex/b38dda0a0c1ab15d9dae0b9b9e8aa1dc.svg?invert_in_darkmode&sanitize=true" align=middle width=17.83399365pt height=28.92634470000001pt/> to compute the gradient wrt to the generalized coordinates.  Conveniently, we have the following for principal stretch models.
 
 <p align="center"><img src="/tex/57d6ce76b81f64d9de86d723aaf06fcf.svg?invert_in_darkmode&sanitize=true" align=middle width=215.32883955pt height=91.60788615pt/></p> 
 
