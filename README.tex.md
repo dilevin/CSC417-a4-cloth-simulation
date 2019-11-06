@@ -193,7 +193,7 @@ where $\lambda$ and $\mu$ are the material properties for the cloth. The first t
 
 The strain energy density for principal stretch models, like the one above, are relatively easy to implement and understand. This is a big reason we like them in graphics. We'll also see that the gradient of this model (needed for force computation) is also pretty easy to compute.
 
-Really, the derivative we need to understand how to compute is $frac{\partial \psi}{\partial F}$. Once we have this we can use $\frac{\partial F}{\partial \mathbf{q}}$ to compute the gradient wrt to the generalized coordinates.  Conveniently, we have the following for principal stretch models.
+Really, the derivative we need to understand how to compute is $\frac{\partial \psi}{\partial F}$. Once we have this we can use $\frac{\partial F}{\partial \mathbf{q}}$ to compute the gradient wrt to the generalized coordinates.  Conveniently, we have the following for principal stretch models.
 
 $$\frac{\partial \psi}{\partial F} = U\underbrace{\begin{bmatrix}\frac{\partial \psi}{\partial s_0} & 0 & 0 \\ 0 & \frac{\partial \psi}{\partial s_1} & 0 \\ 0 & 0 & \frac{\partial \psi}{\partial s_2}\end{bmatrix}}_{dS}V^T $$ 
 
