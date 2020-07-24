@@ -1,0 +1,94 @@
+name: Build-CSC2549-Assignment-Four
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  # Linux / macOS
+  Unix:
+    name: ${{ matrix.name }} (${{ matrix.config }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        config: [Release]
+        include:
+          - os: macos-latest
+            name: macOS
+          - os: ubuntu-latest
+            name: Linux
+
+    env:
+      OMP_NUM_THREADS: 1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 10
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+
+      - name: Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+            sudo apt-get update
+            sudo apt-get install \
+            build-essential \
+            cmake \
+            mesa-common-dev libgl1-mesa-dev libglu1-mesa-dev \
+            xorg-dev \
+            libx11-dev \
+            libxinerama1 libxinerama-dev \
+            libxcursor-dev libxrandr-dev libxi-dev libxmu-dev \
+
+      - name: Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew info git || brew install git
+          brew info cmake || brew install cmake
+
+      - name: Configure
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.config }}
+      - name: Build
+        run: |
+          cd build
+          make
+
+  # Windows
+  Windows:
+    runs-on: windows-latest
+    env:
+      CC: cl.exe
+      CXX: cl.exe
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Release]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 10
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+
+      - name: Configure and build
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=x64
+          cmake -G Ninja ^
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} ^
+            -B build ^
+            -S .
+          cmake --build build

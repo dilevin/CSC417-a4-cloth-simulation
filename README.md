@@ -1,3 +1,5 @@
+[![](https://github.com/dilevin/CSC2549-a4-cloth-simulation/workflows/Build-CSC2549-Assignment-Four/badge.svg)](https://github.com/dilevin/CSC2549-a4-cloth-simulation/actions)
+
 ## Introduction
 
 This assignment will give you the chance to implement a simple cloth simulation. We will leverage our new found expertise on [finite element methods](www.github.com/dilevin/CSC2549-a3-finite-elements-3d) to build a FEM cloth simulation. This simulation will use triangles, rather than tetrahedron as the finite elements and will use a principal stretch-based model for the cloth material. You will also implement your first contact response model, a simple velocity filter that can be bolted onto standard time integration schemes. 
