@@ -125,51 +125,36 @@ $$ f\left(\mathbf{Y}\right)=\sum_{i=0}^{2}f_i\phi_i\left(\mathbf{Y}\right) $$
 
 where $\phi_i$ are the [barycentric coordinates](https://en.wikipedia.org/wiki/Barycentric_coordinate_system) for a 2D triangle and $\mathbf{Y} \in \mathcal{R}^2$ is the 2d coordinate in the undeformed space. 
 
-Our goal is to be able to estimate the 3d world space position of any part of this cloth triangle (for any value of $\mathbf{Y}$ in the triangle). Using our FEM basis, this becomes
+However, cloth is really a thin volumetric construct, of which our triangle only represents a small part. We might need information lying slightly off the triangle surface. To account for this we will need to modify our FEM model a bit. First, let's assume our triangle is actually embedded in a 3D undeformed space $\mathbf{X} \in \mathcal{R}^3$. Let's try and and build and appropriate mapping from this space to the world space. 
 
-$$ \mathbf{x}^t\left(\mathbf{Y}\right)=\sum_{i=0}^{2}\mathbf{x}^t_i\phi_i\left(\mathbf{Y}\right) $$
+Given any point $\mathbf{X}$ in the undeformed space, we can compute the barycentric coordinates of the nearest point on our triangle by solving
 
-where $\mathbf{x}^t_i \in \mathcal{R}^3$ are the 3d, per-vertex positions of the cloth mesh at time $t$. This gives a mapping from the 2d space of the undeformed cloth to the 3d world space.  As usual, we choose the **generalized coordinates** ($\mathbf{q} \in \mathcal{R}^9$) to be the stacked vector of vertex positions, which lets us rewrite the above expression as 
+$$\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \left(T^{T}T\right)^{-1}T^T\left(\mathbf{X} - \mathbf{X}_0\right)$$,
 
-$$\mathbf{x}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \mathbf{x}^t_0 \\ \mathbf{x}^t_1 \\ \mathbf{x}^t_2 \end{bmatrix}}_{\mathbf{q}}$$
- 
-The velocity of the cloth, at any point $\mathbf{Y}$ is then given by the total time derivative: 
+where $T=\begin{bmatrix}\left(\mathbf{X}_1- \mathbf{X}_0\right) & \left(\mathbf{X}_2- \mathbf{X}_0\right)\end{bmatrix}$ is a matrix of edge vectors. We use the constriaint $\phi_0 + \phi_1+\phi_2=1$ to reconstruct $\phi_0$. This equation finds the barycentric coordinates of the nearest point on the triangle to $\mathbf{X}$ in a least squares fashion. The error in this least squares solve will be orthogonal to the column space of $T$, our triangle. For any point $\mathbf{X}$ we can work out its offset from the triangle by computing $(\mathbf{X}-\mathbf{X}_0)^T\mathbf{N}$, where $\mathbf{X}_0$ is the first vertex of our triangle and $\mathbf{N}$ is the undeformed surface normal of the triangle. Because our triangle has a constant normal, we don't need to worry about where we compute it, which makes this all very convenient. 
 
-$$\mathbf{v}^t\left(\mathbf{Y}\right) = \underbrace{\begin{bmatrix} \phi_0\left(\mathbf{Y}\right)I & \phi_1\left(\mathbf{Y}\right)I& \phi_2\left(\mathbf{Y}\right)I \end{bmatrix}}_{N} \underbrace{\begin{bmatrix} \dot{\mathbf{x}}^t_0 \\ \dot{\mathbf{x}}^t_1 \\ \dot{\mathbf{x}}^t_2 \end{bmatrix}}_{\dot{\mathbf{q}}}$$ 
+Let's assume that our point $\mathbf{X}$ maintains a constant offset from the triangle when deformed. This implies we can reconstruct the world space position by offsetting our point the same distance along the world space normal $\mathbf{n}$. This gives us the following mapping from reference space to world space 
 
-which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
+$$ x\left(\mathbf{X}\right)=\sum_{i=0}^{2}\mathbf{x}_i\phi_i\left(\mathbf{X}\right)+\left(\mathbf{X}-\mathbf{X}_0\right)^T\mathbf{N}\cdot\mathbf{n}\left(\mathbf{x}_0,\mathbf{x}_1,\mathbf{x}_2\right) $$.
+
+Now we can choose the **generalized coordinates** ($\mathbf{q} \in \mathcal{R}^9$) to be the stacked vector of vertex positions, which defines the **generalized velocities** as the stacked *9d* vector of per-vertex velocities. 
 
 ## Deformation Gradient 
 
-The final necessary piece of the kinematic puzzle is the measure of deformation. You might be tempted to just compute $F = \frac{\partial \mathbf{x}^t}{\partial \mathbf{Y}}$ but this is going to get you in trouble. The dimensions of this matrix ($F \in \mathcal{R}^{3\times 2}$) make evaluating material models difficult since such models are *designed* to work for volumetric (re: square) deformation matrices. 
+There are lots of ways to handle build a cloth deformation gradient in [literature](https://animation.rwth-aachen.de/media/papers/2013-CAG-AdaptiveCloth.pdf). In this assignment we will be able to avoid these more complicated solution due to our particular choice of undeformed to world space mapping which allows us to directly compute a $3 \times 3$ deformation gradient as 
 
-There are lots of ways to handle this problem in [literature](https://animation.rwth-aachen.de/media/papers/2013-CAG-AdaptiveCloth.pdf) and in this assignment we will rely on one which is both simple and effective. 
-
-First let's remind ourselves that the functions which define barycentric coordinates require us to solve the linear system
-
-$$\begin{bmatrix}\left(\mathbf{Y}_1- \mathbf{Y}_0\right) & \left(\mathbf{Y}_2- \mathbf{Y}_0\right)\end{bmatrix}\begin{bmatrix}\phi_1\left(\mathbf{Y}\right)\\\phi_2\left(\mathbf{Y}\right)\end{bmatrix} = \mathbf{Y} - \mathbf{Y}_0$$
-
-To "square" our deformation gradient, we are going to "lift" the undeformed space of the cloth to 3d. **NOTE:** we are still going to use 2D triangles but now the undeformed vertex positions of those triangles will be given in 3d. Let's call the 3d undeformed vertex positions of our triangle mesh $\mathbf{X}_i$. So now, given any point in this weird 3d undeformed space, the second and third barycentric coordinates are given by 
-
-$$\underbrace{\begin{bmatrix}\left(\mathbf{X}_1- \mathbf{X}_0\right) & \left(\mathbf{X}_2- \mathbf{X}_0\right)\end{bmatrix}}_{T \in \mathcal{R}^{3 \times 2}}\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \mathbf{X} - \mathbf{X}_0$$.
-
-Ok, we've made everything worse. Now we can't even directly invert the right-hand side. But this is one of those cases wherein things had to get [worse before they get better](https://www.youtube.com/watch?v=uDIgS-Soo9Q). However, we can solve this system in a [least-squares](https://en.wikipedia.org/wiki/Least_squares) sense which gives us
-
-$$\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \left(T^{T}T\right)^{-1}T^T\left(\mathbf{X} - \mathbf{X}_0\right)$$
-
-which, when coupled with the fact that $\phi_0 = 1-\phi_1-\phi_2$ gives us everything we need. 
-
-This might seem like an esoteric, algebraic solution, but geometrically it is doing something really quite reasonable. Any 3d point $\mathbf{X}$, which is on a triangle yields the same barycentric coordinates as the 2d solution. That's a good feature to have since we always, always, always [only calculate the world space position of the cloth at points on the cloth](https://en.wikipedia.org/wiki/Truism). ~~For 3d points $\mathbf{X}$ that are off the cloth, this formulation projects them orthogonally (along the triangle normal) onto the cloth and returns the value for this projected cloth point. Because of this projection, the deformation of the cloth in the normal direction is zero, which makes sense, the discrete cloth has no thickness in this direction and cannot deform. However, because $\mathbf{X}$ is now 3d, the derivative $\frac{\partial \phi_i}{\partial \mathbf{X}}$ becomes $3 \times 3$ which means $F$ also becomes a $3\times 3$. This is much easier to deal with down the road. ~~
-
-**This derivation has changed since last year, I will update it soon.**
+$$ \mathrm{F} = \frac{\partial \mathbf{x}}{\partial \mathbf{X}} = \begin{pmatrix} \mathbf{x}_0 & \mathbf{x}_1 & \mathbf{x}_2 & \mathbf{n} \end{pmatrix} \begin{pmatrix} -\mathbf{1}^T\left(\mathrm{T}^T\mathrm{T}\right)^{-1}\mathrm{T}^T\\ \left(\mathrm{T}^T\mathrm{T}\right)^{-1}\mathrm{T}^T\\\mathbf{N}^T\end{pmatrix}$$
 
 ## Kinetic Energy
 
-Armed with the generalized velocities, the formula for the per-triangle kinetic energy is eerily similar to that of assignment 3. It's an integral of the local kinetic energy over the entire triangle
+Armed with the generalized velocities, the formula for the per-triangle kinetic energy is eerily similar to that of assignment 3. It's an integral of the local kinetic energy over the entire triangle, multiplied by the thickness of the cloth, $h$. For this assignment you are free to assume the thickness of the cloth is $1$.
 
-$$ T_{triangle} = \dot{\mathbf{q}}\underbrace{\left(\int_{\mbox{triangle}}\rho N\left(\mathbf{X}\right)^T N\left(\mathbf{X}\right) dV\right)}_{M_e}\dot{\mathbf{q}} $$ 
+$$ T_{triangle} = \frac{1}{2}\dot{\mathbf{q}}^T\left(h\int_\Gamma\rho\begin{pmatrix}\phi_0\phi_0\mathrm{I}&\phi_0\phi_1\mathrm{I}&\phi_0\phi_2\mathrm{I}\\
+\phi_1\phi_0\mathrm{I}&\phi_1\phi_1\mathrm{I}&\phi_1\phi_2\mathrm{I}\\
+\phi_2\phi_0\mathrm{I}&\phi_2\phi_1\mathrm{I}&\phi_2\phi_2\mathrm{I}
+\end{pmatrix}d\Gamma\right)\dot{\mathbf{q}} $$ 
 
-and can be compute analytically using a symbolic math package. The per-element mass matrices for the every cloth triangle can then be *assembled* into the mass matrix for the entire mesh. 
+and can be compute analytically using a symbolic math package. The per-element mass matrices for  every cloth triangle can then be *assembled* into the mass matrix for the entire mesh. 
 
 ## Potential Energy
 
@@ -183,13 +168,11 @@ $\Lambda$ are the eigenvalues of $F^T F$ and also the squared [*singular values*
 
 ### Linear Elasticity without the Pesky Rotations
 
-Now we can formulate a linear elastic model using the principal stretches which "filters out" any rotational components. Much like the Neohookean material model, this model will have one energy term which measures deformation and one energy term that tries to preserve volume (well area in the case of cloth). We already know we can measure deformation using the principal stretches. We also know that the determinant of $F$ measures the change in volume of a 3D object. In the volumetric case this determinant is just the product of the principal stretches. But first, we need to understand some specifics about the deformation gradient of cloth.
+Now we can formulate a linear elastic model using the principal stretches which "filters out" any rotational components. Much like the Neohookean material model, this model will have one energy term which measures deformation and one energy term that tries to preserve volume (well area in the case of cloth). We already know we can measure deformation using the principal stretches. We also know that the determinant of $F$ measures the change in volume of a 3D object. In the volumetric case this determinant is just the product of the principal stretches. 
 
-Recall that our deformation gradient for a cloth triangle is computed using a least squares projection. This is nice because we still have a $3 \times 3$ matrix on which to perform singular value decomposition on (and later ... (*shudder*) take the derivative of). It's problematic because this deformation gradient has a nullspace normal to the triangle (all points normal to the triangle are mapped to the same barycentric coordinate).  This means that, forever and always, **one of the singular values of $F$ will be zero**. Now if we assume that our triangle is not deformed to be inside out or squished to a line or a point, then this zero singular value will always be the last singular value returned by any reasonable SVD code (Eigen is pretty reasonable). Thus rather than use all three principal values in our material model, we will only use the first 2. This gives us the following material model 
+$$\psi\left(s_0, s_1, s_2\right) = \mu\sum_{i=0}^2\left(s_i-1\right)^2 + \frac{\lambda}{2}\left(s_0 +  s_1 +s_2-3\right)^2 $$
 
-$$\psi\left(s_0, s_1\right) = \mu\sum_{i=0}^1\left(s_i-1\right)^2 + \frac{\lambda}{2}\left(s_0 +  s_1 -2\right)^2 $$
-
-where $\lambda$ and $\mu$ are the material properties for the cloth. The first term in this model attempts to keep $s_0$ and $s_1$ close to one (limiting deformation) while the second term is attempting to preserve the area of the deformed triangle (it's a linearization of the determinant). This model is called  **co-rotational linear elasticity** because it is linear in the principal stretches but rotates *with* each finite element. When we use energy models to measure the in-plane stretching of the cloth (or membrane), we often refer to them as membrane energies.  
+where $\lambda$ and $\mu$ are the material properties for the cloth. The first term in this model attempts to keep $s_0$ and $s_1$ close to one (limiting deformation) while the second term is attempting to preserve the volume of the deformed triangle (it's a linearization of the determinant). This model is called  **co-rotational linear elasticity** because it is linear in the principal stretches but rotates *with* each finite element. When we use energy models to measure the in-plane stretching of the cloth (or membrane), we often refer to them as membrane energies.  
 
 ### The Gradient of Principal Stretch Models 
 

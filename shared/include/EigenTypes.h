@@ -17,9 +17,11 @@ namespace Eigen {
     using Matrix32d = Eigen::Matrix<double, 3,2>;
     using Matrix34d = Eigen::Matrix<double, 3,4>;
     using Matrix36d = Eigen::Matrix<double, 3,6>;
+    using Matrix39d = Eigen::Matrix<double, 3, 9>;
     using Matrix43d = Eigen::Matrix<double, 4,3>;
     using Matrix66d  = Eigen::Matrix<double, 6,6>;
     using Matrix99d = Eigen::Matrix<double, 9, 9>;
+    using Matrix93d = Eigen::Matrix<double, 9, 3>;
     using Matrix1212d = Eigen::Matrix<double, 12,12>;
     using Matrix44f = Eigen::Matrix<float, 4,4>;
     
