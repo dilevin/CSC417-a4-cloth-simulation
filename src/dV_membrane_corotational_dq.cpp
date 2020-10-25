@@ -12,13 +12,7 @@ void dV_membrane_corotational_dq(Eigen::Vector9d &dV, Eigen::Ref<const Eigen::Ve
     Eigen::Matrix3d W; 
 
     //TODO: SVD Here
-
-    //check for failure
-    if(std::fabs(S[2]) > 1e-8) {
-        std::cout<<"SVD Fail \n";
-        exit(1);
-    }
-
+    
     //Fix for inverted elements (thanks to Danny Kaufman)
     double det = S[0]*S[1];
     
