@@ -194,7 +194,7 @@ Here $\mbox{diag}\left(\right)$ takes a $3\times 1$ vector as input and converts
 
 $$ \mathbf{ds}_{ij} = \begin{bmatrix}\frac{\partial^2 \psi}{\partial s_0^2} & \frac{\partial^2 \psi}{\partial s_0\partial s_1} & \frac{\partial^2 \psi}{\partial s_0\partial s_2} \\ \frac{\partial^2 \psi}{\partial s_0\partial s_1} & \frac{\partial^2 \psi}{\partial s_1^2} & \frac{\partial^2 \psi}{\partial s_1\partial s_2} \\ \frac{\partial^2 \psi}{\partial s_0\partial s_2} & \frac{\partial^2 \psi}{\partial s_1\partial s_12} & \frac{\partial^2 \psi}{\partial s_2^2}\end{bmatrix}\begin{bmatrix} \frac{\partial s_0}{\partial F_{ij}} \\ \frac{\partial s_1}{\partial F_{ij}} \\ \frac{\partial s_2}{\partial F_{ij}}\end{bmatrix}$$
 
-Keep in mind when looking at this formula is **DON'T PANIC**. It's a straight forward application of the chain rule, just a little nastier than usual. The final thing to remember is that **I am giving you the code to compute SVD derivatives in dsvd.h/dsvd.cpp**.  
+When looking at this formula **DON'T PANIC**. It's a straight forward application of the chain rule, just a little nastier than usual. Also remember that **I am giving you the code to compute SVD derivatives in dsvd.h/dsvd.cpp**.  
 
 If we define the svd of a matrix as $F = USV^T$, this code returns $\frac{\partial U}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$, $\frac{\partial V}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}$ and $\frac{\partial S}{\partial F}\in\mathcal{R}^{3\times 3 \times 3}$. Yes this code returns 3 and four dimensional tensors storing this quantities, yes I said never to do this in class, consider this the exception that makes the rule.  The latter two indices on each tensor are the $i$ and $j$ indices used in the formula above. 
 
