@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+</head>
+<body>
+<h2 id="introduction">Introduction</h2>
+<p>This assignment will give you the chance to implement a simple cloth simulation. We will leverage our new found expertise on <a href="www.github.com/dilevin/CSC2549-a3-finite-elements-3d">finite element methods</a> to build a FEM cloth simulation. This simulation will use triangles, rather than tetrahedron as the finite elements and will use a principal stretch-based model for the cloth material. You will also implement your first contact response model, a simple velocity filter that can be bolted onto standard time integration schemes.</p>
+<h3 id="prerequisite-installation">Prerequisite installation</h3>
+<p>On all platforms, we will assume you have installed cmake and a modern c++ compiler on Mac OS X<a href="#¹macusers">¹</a>, Linux<a href="#²linuxusers">²</a>, or Windows<a href="#³windowsusers">³</a>.</p>
+<p>We also assume that you have cloned this repository using the <code>--recursive</code> flag (if not then issue <code>git submodule update --init --recursive</code>).</p>
+<p><strong>Note:</strong> We only officially support these assignments on Ubuntu Linux 18.04 (the OS the teaching labs are running) and OSX 10.13 (the OS I use on my personal laptop). While they <em>should</em> work on other operating systems, we make no guarantees.</p>
+<p><strong>All grading of assignments is done on Linux 18.04</strong></p>
+<h3 id="layout">Layout</h3>
+<p>All assignments will have a similar directory and file layout:</p>
+<pre><code>README.md
+CMakeLists.txt
+main.cpp
+assignment_setup.h
+include/
+  function1.h
+  function2.h
+  ...
+src/
+  function1.cpp
+  function2.cpp
+  ...
+data/
+  ...
+...</code></pre>
+<p>The <code>README.md</code> file will describe the background, contents and tasks of the assignment.</p>
+<p>The <code>CMakeLists.txt</code> file setups up the cmake build routine for this assignment.</p>
+<p>The <code>main.cpp</code> file will include the headers in the <code>include/</code> directory and link to the functions compiled in the <code>src/</code> directory. This file contains the <code>main</code> function that is executed when the program is run from the command line.</p>
+<p>The <code>include/</code> directory contains one file for each function that you will implement as part of the assignment.</p>
+<p>The <code>src/</code> directory contains <em>empty implementations</em> of the functions specified in the <code>include/</code> directory. This is where you will implement the parts of the assignment.</p>
+<p>The <code>data/</code> directory contains <em>sample</em> input data for your program. Keep in mind you should create your own test data to verify your program as you write it. It is not necessarily sufficient that your program <em>only</em> works on the given sample data.</p>
+<h2 id="compilation-for-debugging">Compilation for Debugging</h2>
+<p>This and all following assignments will follow a typical cmake/make build routine. Starting in this directory, issue:</p>
+<pre><code>mkdir build
+cd build
+cmake ..</code></pre>
+<p>If you are using Mac or Linux, then issue:</p>
+<pre><code>make</code></pre>
+<h2 id="compilation-for-testing">Compilation for Testing</h2>
+<p>Compiling the code in the above manner will yield working, but very slow executables. To run the code at full speed, you should compile it in release mode. Starting in the <strong>build directory</strong>, do the following:</p>
+<pre><code>cmake .. -DCMAKE_BUILD_TYPE=Release</code></pre>
+<p>Followed by:</p>
+<pre><code>make </code></pre>
+<p>Your code should now run significantly (sometimes as much as ten times) faster.</p>
+<p>If you are using Windows, then running <code>cmake ..</code> should have created a Visual Studio solution file called <code>a4-cloth-simulation.sln</code> that you can open and build from there. Building the project will generate an .exe file.</p>
+<p>Why don't you try this right now?</p>
+<h2 id="execution">Execution</h2>
+<p>Once built, you can execute the assignment from inside the <code>build/</code> using</p>
+<pre><code>./a4-cloth-simulation</code></pre>
+<p>While running, you can activate or de-activate the collision sphere by pressing <code>c</code>.</p>
+<h2 id="background">Background</h2>
+<p>In this assignment we will move from the simulation of volumetric objects to the simulation of thin sheets or thin shells. For thin objects, rather than discretize the volume with tetrahedra (as was done in <a href="https://github.com/dilevin/CSC2549-a2-mass-spring-3d">assignment 2</a> and <a href="https://github.com/dilevin/CSC2549-a3-finite-elements-3d">assignment 3</a>) we discretize the <a href="http://www.unchainedgeometry.com/medial.html">medial surface</a> of the cloth. This surface takes the form of a two-dimensional (2d) <a href="https://en.wikipedia.org/wiki/Manifold">manifold</a> embedded in (3d) space. While many of the concepts you have already learned will carry over to this assignment, the major confounding factor will be evaluating the material model for the cloth on this manifold. To make things more interesting, we will see our first material model expressed in terms of the &quot;principal stretches&quot; of the deformation.</p>
+<p>In order to allow for more interesting interactions with the cloth, we will also implement collision detection and resolution with an analytical sphere. We will implement a simple collision resolution scheme, via velocity filter. These algorithms try to prevent collisions by &quot;filtering&quot; a previously computed velocity to remove any components that might make collisions worse. While running the assignment code, you can activate or de-activate the collision sphere by pressing <code>c</code>.</p>
+<div class="figure">
+<img src="images/cloth.gif" alt="Cloth simulation!" />
+<p class="caption">Cloth simulation!</p>
+</div>
+<h2 id="resources">Resources</h2>
+<p>Somewhat sadly, it is difficult to find a comprehensive resource for modern cloth simulation. However, there are a collection of seminal papers that are helpful to peruse. The first, <a href="https://www.cs.cmu.edu/~baraff/papers/sig98.pdf">Large-Steps in Cloth Simulation</a> is widely recognized for introducing the linearly-implicit time integrator to graphics. While we won't deal with bending stiffness (think the difference between a Kleenex and a steel sheet), <a href="https://www.sciencedirect.com/science/article/abs/pii/S0167839607000891">Discrete quadratic curvature energies</a> are still the state-of-the-art approach for triangle mesh cloth. Finally, modern cloth simulators rely on <a href="https://dl.acm.org/citation.cfm?id=2366171">aggressive remeshing schemes</a> to capture detail while retaining performance.</p>
+<h2 id="finite-elements-on-manifolds">Finite Elements on Manifolds</h2>
+<p>Our major challenge in this assignment arises from the difference in the dimensionality of the cloth material and the world (deformed) space (<strong>NOTE:</strong> I use the terms world and deformed space interchangeably). Cloth is locally two-dimensional (<em>2d</em>) while the world is <a href="https://www.quora.com/What-are-all-of-Calvins-alter-egos"><em>3d</em></a>. What will be comforting is that, a relatively straight-forward application of the finite-element-method (FEM) will allow us to build a passable dynamic cloth simulator.</p>
+<h2 id="triangular-finite-elements">Triangular Finite Elements</h2>
+<p>The previous assignment applied FEM to <em>volumetric</em> simulation -- the simulation of objects with geometry of dimension equal to that of the world space (i.e our bunny and armadillo were 3d as was the world). In this case our finite elements were also volumetric ... they were tetrahedra in the undeformed space of the simulated object.</p>
+<p>In the case of cloth, the underformed geometry is of different dimension (2d) than the world space (3d). Because our finite elements divide up the undeformed space, they also need to be 2d. As such we will use <a href="https://en.wikipedia.org/wiki/Triangle">triangles</a>, not tetrahedra as our elements.</p>
+<h2 id="generalized-coordinates-and-velocities">Generalized Coordinates and Velocities</h2>
+<p>Just as in the <a href="https://github.com/dilevin/CSC2549-a3-finite-elements-3d">previous assignment</a>, we need to choose basis, or shape functions with which to approximate functions on our, now triangular, mesh. A triangle as 3 nodes our approximations become</p>
+<p><span class="math display">\[ f\left(\mathbf{Y}\right)=\sum_{i=0}^{2}f_i\phi_i\left(\mathbf{Y}\right) \]</span></p>
+<p>where <span class="math inline">\(\phi_i\)</span> are the <a href="https://en.wikipedia.org/wiki/Barycentric_coordinate_system">barycentric coordinates</a> for a 2D triangle and <span class="math inline">\(\mathbf{Y} \in \mathcal{R}^2\)</span> is the 2d coordinate in the undeformed space.</p>
+<p>However, cloth is really a thin volumetric construct, of which our triangle only represents a small part. We might need information lying slightly off the triangle surface. To account for this we will need to modify our FEM model a bit. First, let's assume our triangle is actually embedded in a 3D undeformed space <span class="math inline">\(\mathbf{X} \in \mathcal{R}^3\)</span>. Let's try and and build and appropriate mapping from this space to the world space.</p>
+<p>Given any point <span class="math inline">\(\mathbf{X}\)</span> in the undeformed space, we can compute the barycentric coordinates of the nearest point on our triangle by solving</p>
+<p><span class="math display">\[\begin{bmatrix}\phi_1\left(\mathbf{X}\right)\\\phi_2\left(\mathbf{X}\right)\end{bmatrix} = \left(T^{T}T\right)^{-1}T^T\left(\mathbf{X} - \mathbf{X}_0\right)\]</span>,</p>
+<p>where <span class="math inline">\(T=\begin{bmatrix}\left(\mathbf{X}_1- \mathbf{X}_0\right) &amp; \left(\mathbf{X}_2- \mathbf{X}_0\right)\end{bmatrix}\)</span> is a matrix of edge vectors. We use the constriaint <span class="math inline">\(\phi_0 + \phi_1+\phi_2=1\)</span> to reconstruct <span class="math inline">\(\phi_0\)</span>. This equation finds the barycentric coordinates of the nearest point on the triangle to <span class="math inline">\(\mathbf{X}\)</span> in a least squares fashion. The error in this least squares solve will be orthogonal to the column space of <span class="math inline">\(T\)</span>, our triangle. For any point <span class="math inline">\(\mathbf{X}\)</span> we can work out its offset from the triangle by computing <span class="math inline">\((\mathbf{X}-\mathbf{X}_0)^T\mathbf{N}\)</span>, where <span class="math inline">\(\mathbf{X}_0\)</span> is the first vertex of our triangle and <span class="math inline">\(\mathbf{N}\)</span> is the undeformed surface normal of the triangle. Because our triangle has a constant normal, we don't need to worry about where we compute it, which makes this all very convenient.</p>
+<p>Let's assume that our point <span class="math inline">\(\mathbf{X}\)</span> maintains a constant offset from the triangle when deformed. This implies we can reconstruct the world space position by offsetting our point the same distance along the world space normal <span class="math inline">\(\mathbf{n}\)</span>. This gives us the following mapping from reference space to world space</p>
+<p><span class="math display">\[ x\left(\mathbf{X}\right)=\sum_{i=0}^{2}\mathbf{x}_i\phi_i\left(\mathbf{X}\right)+\left(\mathbf{X}-\mathbf{X}_0\right)^T\mathbf{N}\cdot\mathbf{n}\left(\mathbf{x}_0,\mathbf{x}_1,\mathbf{x}_2\right) \]</span>.</p>
+<p>Now we can choose the <strong>generalized coordinates</strong> (<span class="math inline">\(\mathbf{q} \in \mathcal{R}^9\)</span>) to be the stacked vector of vertex positions, which defines the <strong>generalized velocities</strong> as the stacked <em>9d</em> vector of per-vertex velocities.</p>
+<h2 id="deformation-gradient">Deformation Gradient</h2>
+<p>There are lots of ways to handle build a cloth deformation gradient in <a href="https://animation.rwth-aachen.de/media/papers/2013-CAG-AdaptiveCloth.pdf">literature</a>. In this assignment we will be able to avoid these more complicated solution due to our particular choice of undeformed to world space mapping which allows us to directly compute a <span class="math inline">\(3 \times 3\)</span> deformation gradient as</p>
+<p><span class="math display">\[ \mathrm{F} = \frac{\partial \mathbf{x}}{\partial \mathbf{X}} = \begin{pmatrix} \mathbf{x}_0 &amp; \mathbf{x}_1 &amp; \mathbf{x}_2 &amp; \mathbf{n} \end{pmatrix} \begin{pmatrix} -\mathbf{1}^T\left(\mathrm{T}^T\mathrm{T}\right)^{-1}\mathrm{T}^T\\ \left(\mathrm{T}^T\mathrm{T}\right)^{-1}\mathrm{T}^T\\\mathbf{N}^T\end{pmatrix}\]</span></p>
+<h2 id="kinetic-energy">Kinetic Energy</h2>
+<p>Armed with the generalized velocities, the formula for the per-triangle kinetic energy is eerily similar to that of assignment 3. It's an integral of the local kinetic energy over the entire triangle, multiplied by the thickness of the cloth, <span class="math inline">\(h\)</span>. For this assignment you are free to assume the thickness of the cloth is <span class="math inline">\(1\)</span>.</p>
+<p><span class="math display">\[ T_{triangle} = \frac{1}{2}\dot{\mathbf{q}}^T\left(h\int_\Gamma\rho\begin{pmatrix}\phi_0\phi_0\mathrm{I}&amp;\phi_0\phi_1\mathrm{I}&amp;\phi_0\phi_2\mathrm{I}\\
+\phi_1\phi_0\mathrm{I}&amp;\phi_1\phi_1\mathrm{I}&amp;\phi_1\phi_2\mathrm{I}\\
+\phi_2\phi_0\mathrm{I}&amp;\phi_2\phi_1\mathrm{I}&amp;\phi_2\phi_2\mathrm{I}
+\end{pmatrix}d\Gamma\right)\dot{\mathbf{q}} \]</span></p>
+<p>and can be compute analytically using a symbolic math package. The per-element mass matrices for every cloth triangle can then be <em>assembled</em> into the mass matrix for the entire mesh.</p>
+<h2 id="potential-energy">Potential Energy</h2>
+<p>For this assignment we will use a different type of material model to describe the elastic behaviour of the cloth. This is motivated by the fact that cloth is typically very resistant to stretching. For these materials, a linear stress-strain relationship is often desirable. Unfortunately, cloth triangles also rotate a lot (every time they fold-over for instance). Rotations are <strong>NOT</strong> linear and so a purely linear relationship will suffer from severe artifacts. To avoid this we will build a material model that only measures the in plane deformation of the cloth via its <em>principal stretches</em>.</p>
+<h3 id="principal-stretches">Principal Stretches</h3>
+<p>Recall that in the previous assignment we used the right Cauchy strain tensor (<span class="math inline">\(F^T F\)</span>) to measure deformation and the rationale for using this was that it measures the squared deformed length of an arbitrary, infinitesimal line of material, <span class="math inline">\(\mathbf{dX}\)</span>. In other words, <span class="math inline">\(|\mathbf{dx}|^2 = \mathbf{dX}^T \left(F^T F\right)\mathbf{dX}\)</span>. Because <span class="math inline">\(F\)</span> is symmetric and positive definite, we can perform an <a href="https://en.wikipedia.org/wiki/Eigendecomposition_of_a_matrix">eigendecomposition</a> such that <span class="math inline">\(F^T F = V \Lambda V^T\)</span> where <span class="math inline">\(V\)</span> is the orthogonal matrix of eigenvectors and <span class="math inline">\(\Lambda\)</span> is the diagonal matrix of eigenvalues. This means we can think of this squared length as <span class="math inline">\(|\mathbf{dx}|^2 = \hat{\mathbf{dX}}^T \Lambda \hat{\mathbf{dX}}\)</span> where <span class="math inline">\(\hat{\mathbf{dX}}=U^T\mathbf{dX}\)</span>. In other words, if we transform <span class="math inline">\(\mathbf{dX}\)</span> just right, its deformation is completely characterized by <span class="math inline">\(\Lambda\)</span>.</p>
+<p><span class="math inline">\(\Lambda\)</span> are the eigenvalues of <span class="math inline">\(F^T F\)</span> and also the squared <a href="https://en.wikipedia.org/wiki/Singular_value_decomposition"><em>singular values</em></a> of <span class="math inline">\(F\)</span>. We call these singular values of <span class="math inline">\(F\)</span> the <a href="http://www.femdefo.org">principal stretches</a>. They measure deformation independently of the orientation (or rotation/reflection) of the finite element.</p>
+<h3 id="linear-elasticity-without-the-pesky-rotations">Linear Elasticity without the Pesky Rotations</h3>
+<p>Now we can formulate a linear elastic model using the principal stretches which &quot;filters out&quot; any rotational components. Much like the Neohookean material model, this model will have one energy term which measures deformation and one energy term that tries to preserve volume (well area in the case of cloth). We already know we can measure deformation using the principal stretches. We also know that the determinant of <span class="math inline">\(F\)</span> measures the change in volume of a 3D object. In the volumetric case this determinant is just the product of the principal stretches.</p>
+<p><span class="math display">\[\psi\left(s_0, s_1, s_2\right) = \mu\sum_{i=0}^2\left(s_i-1\right)^2 + \frac{\lambda}{2}\left(s_0 +  s_1 +s_2-3\right)^2 \]</span></p>
+<p>where <span class="math inline">\(\lambda\)</span> and <span class="math inline">\(\mu\)</span> are the material properties for the cloth. The first term in this model attempts to keep <span class="math inline">\(s_0\)</span> and <span class="math inline">\(s_1\)</span> close to one (limiting deformation) while the second term is attempting to preserve the volume of the deformed triangle (it's a linearization of the determinant). This model is called <strong>co-rotational linear elasticity</strong> because it is linear in the principal stretches but rotates <em>with</em> each finite element. When we use energy models to measure the in-plane stretching of the cloth (or membrane), we often refer to them as membrane energies.</p>
+<h3 id="the-gradient-of-principal-stretch-models">The Gradient of Principal Stretch Models</h3>
+<p>The strain energy density for principal stretch models, like the one above, are relatively easy to implement and understand. This is a big reason we like them in graphics. We'll also see that the gradient of this model (needed for force computation) is also pretty easy to compute.</p>
+<p>Really, the derivative we need to understand how to compute is <span class="math inline">\(\frac{\partial \psi}{\partial F}\)</span>. Once we have this we can use <span class="math inline">\(\frac{\partial F}{\partial \mathbf{q}}\)</span> to compute the gradient wrt to the generalized coordinates. Conveniently, we have the following for principal stretch models.</p>
+<p><span class="math display">\[\frac{\partial \psi}{\partial F} = U\underbrace{\begin{bmatrix}\frac{\partial \psi}{\partial s_0} &amp; 0 &amp; 0 \\ 0 &amp; \frac{\partial \psi}{\partial s_1} &amp; 0 \\ 0 &amp; 0 &amp; \frac{\partial \psi}{\partial s_2}\end{bmatrix}}_{dS}V^T \]</span></p>
+<p>where <span class="math inline">\(F = USV^T\)</span> is the singular value decomposition.</p>
+<h3 id="the-hessian-of-principal-stretch-models">The Hessian of Principal Stretch Models</h3>
+<p>Unfortunately, the gradient of the principal stretch energy is not enough. That's because our favourite implicit integrators require second order information to provide the stability and performance we crave in computer graphics. This is where things get messy. The good news is that, if we can just compute <span class="math inline">\(\frac{\partial \psi}{\partial F \partial F}\)</span> then we can use <span class="math inline">\(\frac{\partial F}{\partial \mathbf{q}}\)</span> to compute our Hessian wrt to the generalized coordinates (this follows from the linearity of the FEM formulation wrt to the generalized coordinates). This formula is going to get ugly so, in an attempt to make it somewhat clear, we are going to consider derivatives wrt to single entries of <span class="math inline">\(F\)</span>, denoted <span class="math inline">\(F_{ij}\)</span>. In this context we are trying to compute</p>
+<p><span class="math display">\[\frac{\partial  }{\partial F_{ij}}\frac{\partial \psi}{\partial F}  = \frac{\partial U}{\partial F_{ij}}dS V^T + U\mbox{diag}\left(\mathbf{ds}_{ij}\right)V^T + UdS \frac{\partial V}{\partial F_{ij}}^T\]</span></p>
+<p>Here <span class="math inline">\(\mbox{diag}\left(\right)\)</span> takes a <span class="math inline">\(3\times 1\)</span> vector as input and converts it into a diagonal matrix, with the entries of the matrix on the diagonal. In our case, we define <span class="math inline">\(\mathbf{ds}\)</span> as</p>
+<p><span class="math display">\[ \mathbf{ds}_{ij} = \begin{bmatrix}\frac{\partial^2 \psi}{\partial s_0^2} &amp; \frac{\partial^2 \psi}{\partial s_0\partial s_1} &amp; \frac{\partial^2 \psi}{\partial s_0\partial s_2} \\ \frac{\partial^2 \psi}{\partial s_0\partial s_1} &amp; \frac{\partial^2 \psi}{\partial s_1^2} &amp; \frac{\partial^2 \psi}{\partial s_1\partial s_2} \\ \frac{\partial^2 \psi}{\partial s_0\partial s_2} &amp; \frac{\partial^2 \psi}{\partial s_1\partial s_12} &amp; \frac{\partial^2 \psi}{\partial s_2^2}\end{bmatrix}\begin{bmatrix} \frac{\partial s_0}{\partial F_{ij}} \\ \frac{\partial s_1}{\partial F_{ij}} \\ \frac{\partial s_2}{\partial F_{ij}}\end{bmatrix}\]</span></p>
+<p>The first thing to keep in mind when looking at this formula is <strong>DON'T PANIC</strong>. It's a straight forward application of the chain rule, just a little nastier than usual. The second thing to keep in mind is that all derivatives wrt to <span class="math inline">\(s_2\)</span> are zero (it never changes, it's always 0). The final thing to keep in mind is that <strong>I am giving you the code to compute SVD derivatives in dsvd.h/dsvd.cpp</strong>.</p>
+<p>If we define the svd of a matrix as <span class="math inline">\(F = USV^T\)</span>, this code returns <span class="math inline">\(\frac{\partial U}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}\)</span>, <span class="math inline">\(\frac{\partial V}{\partial F}\in\mathcal{R}^{3\times 3 \times 3 \times 3}\)</span> and <span class="math inline">\(\frac{\partial S}{\partial F}\in\mathcal{R}^{3\times 3 \times 3}\)</span>. Yes this code returns 3 and four dimensional tensors storing this quantities, yes I said never to do this in class, consider this the exception that makes the rule. The latter two indices on each tensor are the <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> indices used in the formula above.</p>
+<p>The hardest part of implementing this gradient correctly is handling the SVD terms. These gradients have a different form based on whether your <span class="math inline">\(F\)</span> matrix is square or rectangular. This is one big reason that the <span class="math inline">\(3 \times 3\)</span> deformation gradient we use in this assignment is desirable. It allows one to use the same singular value decomposition code for volumetric and cloth models.</p>
+<h2 id="collision-detection-with-spheres">Collision Detection with Spheres</h2>
+<p>To make this assignment a little more visually interesting, you will implement simple collision detection and resolution with an analytical sphere. <strong>Collision Detection</strong> is the process of detecting contact between two or more objects in the scene and <strong>Collision Resolution</strong> is the process of modifying the motion of the object in response to these detected collisions.</p>
+<p>For this assignment we will implement per-vertex collision detection with the sphere. This is as simple as detecting if the distance from the center of the sphere to any vertex in your mesh is less than the radius of the sphere. If you detect such a collision, you need to store an <strong>index</strong> to the colliding vertex, along with the outward facing <strong>contact normal</strong>(<span class="math inline">\(\mathbf{n}\)</span>). In this case, the outward facing contact normal is the sphere normal at the point of contact.</p>
+<h2 id="collision-resolution">Collision Resolution</h2>
+<p>The minimal goal of any collision resolution algorithm is to prevent collisions from getting worse locally. To do this we will implement a simple <em>velocity filter</em> approach. Velocity filters are so named because the &quot;filter out&quot; components of an objects velocity that will increase the severity of a collision. Given a vertex that is colliding with our sphere, the only way that the collision can get worse locally is if that vertex moves <em>into</em> the sphere. One way we can check if this is happening is to compute the projection of the vertex velocity onto the outward facing contact normal (<span class="math inline">\(\mathbf{n}^T\dot{\mathbf{q}}_i\)</span>, <span class="math inline">\(i\)</span> selects the <span class="math inline">\(i^th\)</span> contacting vertex). If this number is <span class="math inline">\(&gt;0\)</span> we are OK, the vertex is moving away from the sphere. If this number is <span class="math inline">\(&lt;0\)</span> we better do something.</p>
+<p>The thing we will do is project out, or filter out, the component of the velocity moving in the negative, normal direction like so:</p>
+<p><span class="math display">\[\dot{\mathbf{q}}^{\mbox{filtered}}_i = \dot{\mathbf{q}}_i - \mathbf{n}\mathbf{n}^T\dot{\mathbf{q}}_i\]</span></p>
+<p>This &quot;fixes&quot; the collision. This approach to collision resolution is fast but for more complicated scenes it is fraught with peril. For instance it doesn't take into account how it is deforming the simulated object which can cause big headaches when objects are stiff or rigid. We'll see a cleaner mathematical approach to content in the final assignment of the course.</p>
+<h2 id="assignment-implementation">Assignment Implementation</h2>
+<h3 id="implementation-notes">Implementation Notes</h3>
+<p>In this assignment you will reuse your linearly implicit integrator to time step the dynamic system. Also, we will eschew implementing the strain energy density function, quadrature rule and potential energies separately. Instead functions for potential energy and its derivatives should directly compute the integrated values for a triangular element.</p>
+<h3 id="dphi_cloth_triangle_dx.cpp">dphi_cloth_triangle_dX.cpp</h3>
+<p>Piecewise constant gradient matrix for linear shape functions. Row <span class="math inline">\(i\)</span> of the returned matrix contains the gradient of the <span class="math inline">\(i^{th}\)</span> shape function.</p>
+<h3 id="t_cloth.cpp">T_cloth.cpp</h3>
+<p>The kinetic energy of the whole cost mesh.</p>
+<h3 id="dv_cloth_gravity_dq.cpp">dV_cloth_gravity_dq.cpp</h3>
+<p>Gradient of potential energy due to gravity</p>
+<h3 id="v_membrane_corotational.cpp">V_membrane_corotational.cpp</h3>
+<p>Potential energy for the cloth stretching force</p>
+<h3 id="dv_membrane_corotational_dq.cpp">dV_membrane_corotational_dq.cpp</h3>
+<p>Gradient of the cloth stretching energy.</p>
+<h3 id="d2v_membrane_corotational_dq2.cpp">d2V_membrane_corotational_dq2.cpp</h3>
+<p>Hessian matrix of the cloth stretching energy</p>
+<h3 id="v_spring_particle_particle.cpp">V_spring_particle_particle.cpp</h3>
+<p><strong>Use your code from the last assignment</strong></p>
+<h3 id="dv_spring_particle_particle_dq.cpp">dV_spring_particle_particle_dq.cpp</h3>
+<p><strong>Use your code from the last assignment</strong></p>
+<h3 id="mass_matrix_mesh.cpp">mass_matrix_mesh.cpp</h3>
+<p>Assemble the full mass matrix for the entire tetrahedral mesh.</p>
+<h3 id="assemble_forces.cpp">assemble_forces.cpp</h3>
+<p>Assemble the global force vector for the finite element mesh.</p>
+<h3 id="assemble_stiffness.cpp">assemble_stiffness.cpp</h3>
+<p>Assemble the global stiffness matrix for the finite element mesh.</p>
+<h3 id="linearly_implicit_euler.h">linearly_implicit_euler.h</h3>
+<p><strong>Use your code from the last assignment</strong></p>
+<h3 id="fixed_point_constraints.cpp">fixed_point_constraints.cpp</h3>
+<p><strong>Use your code from the last assignment</strong></p>
+<h3 id="collision_detection_cloth_sphere.cpp">collision_detection_cloth_sphere.cpp</h3>
+<p>Detect if any mesh vertex falls inside a sphere centered at (0,0,0.4) with radius 0.22</p>
+<h3 id="velocity_filter_cloth_sphere.cpp">velocity_filter_cloth_sphere.cpp</h3>
+<p>Project out components of the per-vertex velocities which are in the <strong>positive</strong> direction of the contact normal</p>
+<h3 id="pick_nearest_vertices.cpp">pick_nearest_vertices.cpp</h3>
+<p><strong>Use your code from the last assignment</strong></p>
+</body>
+</html>
