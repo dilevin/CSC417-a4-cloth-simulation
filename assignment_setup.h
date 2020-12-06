@@ -46,7 +46,7 @@ Eigen::SparseMatrixd N;
 
 //material parameters
 double density = 1;
-double YM = 1e6; //young's modulus
+double YM = 1e5; //young's modulus
 double mu = 0.4; //poissons ratio
 double C = (YM*mu)/((1.0+mu)*(1.0-2.0*mu));
 double D = YM/(2.0*(1.0+mu));
@@ -244,7 +244,7 @@ inline void assignment_setup(int argc, char **argv, Eigen::VectorXd &q, Eigen::V
     
     //constant gravity vector
     gravity.resize(q.rows(),1);
-    dV_cloth_gravity_dq(gravity, M, Eigen::Vector3d(0,-900.8,0));
+    dV_cloth_gravity_dq(gravity, M, Eigen::Vector3d(0,-1800.8,0));
 
     //std::cout<<"Gravity "<<gravity.transpose()<<"\n";
     
